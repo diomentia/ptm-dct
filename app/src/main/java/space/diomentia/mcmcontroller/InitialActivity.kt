@@ -1,5 +1,6 @@
 package space.diomentia.mcmcontroller
 
+import android.device.DeviceManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +29,7 @@ import com.ubx.usdk.rfid.aidl.ITag6BCallback
 import com.ubx.usdk.util.QueryMode
 import space.diomentia.mcmcontroller.ui.theme.MCMControllerTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 class InitialActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +37,8 @@ class InitialActivity : ComponentActivity() {
         setContent {
             MCMControllerTheme {
                 Scaffold(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = { TopAppBar(title = { Text(this.title.toString()) }) }
                 ) { innerPadding ->
                     RfidInfo(
                         modifier = Modifier.padding(innerPadding)
@@ -47,8 +52,6 @@ class InitialActivity : ComponentActivity() {
 @Composable
 fun RfidInfo(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        /*
-        // from platform SDK
         val deviceId: String = try {
             val deviceManager = DeviceManager()
             deviceManager.deviceId
@@ -56,17 +59,6 @@ fun RfidInfo(modifier: Modifier = Modifier) {
             e.message ?: "Error!"
         }
         Text("Device ID: $deviceId")
-        val scanStatus = try {
-            val scanManager = ScanManager()
-            val x = scanManager.openScanner()
-            scanManager.closeScanner()
-            x.toString()
-        } catch (e: Exception) {
-            e.message ?: "Error!"
-        }
-        Text("Barcode scanner: $scanStatus")
-        Spacer(modifier = Modifier.padding(20.dp))
-        */
         var rfidStatus by remember { mutableStateOf<String>(null.toString()) }
         var rfidFound by remember { mutableStateOf<String>(null.toString()) }
         var rfidMemory by remember { mutableStateOf<String>(null.toString()) }
