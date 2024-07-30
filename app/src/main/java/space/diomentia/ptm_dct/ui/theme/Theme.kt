@@ -1,12 +1,8 @@
 package space.diomentia.ptm_dct.ui.theme
 
-import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
 private val PtmColorScheme = darkColorScheme(
     primary = blue_aquamarine,
@@ -20,7 +16,7 @@ private val PtmColorScheme = darkColorScheme(
 )
 
 @Composable
-fun MCMControllerTheme(
+fun PtmDctTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = PtmColorScheme
