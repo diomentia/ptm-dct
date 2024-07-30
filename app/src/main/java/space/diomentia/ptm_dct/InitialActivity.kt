@@ -1,10 +1,13 @@
-package space.diomentia.mcmcontroller
+package space.diomentia.ptm_dct
 
 import android.device.DeviceManager
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,10 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.ubx.usdk.USDKManager
 import com.ubx.usdk.rfid.aidl.IRfidCallback
 import com.ubx.usdk.util.QueryMode
-import space.diomentia.mcmcontroller.ui.theme.MCMControllerTheme
+import space.diomentia.ptm_dct.ui.theme.MCMControllerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class InitialActivity : ComponentActivity() {
@@ -33,15 +37,20 @@ class InitialActivity : ComponentActivity() {
             MCMControllerTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = { TopAppBar(title = { Text(this.title.toString()) }) }
+                    topBar = { TopAppBar(title = { Text(resources.getString(R.string.app_name)) }) }
                 ) { innerPadding ->
-                    RfidInfo(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Box(Modifier.padding(innerPadding)) {
+                        Contents(Modifier.padding(8.dp))
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+fun Contents(modifier: Modifier) {
+
 }
 
 @Composable
@@ -59,7 +68,7 @@ fun RfidInfo(modifier: Modifier = Modifier) {
         var rfidTid by remember { mutableStateOf<String>(null.toString()) }
         var rfidData by remember { mutableStateOf<String>(null.toString()) }
         var rfidRssi by remember { mutableStateOf<String>(null.toString()) }
-        USDKManager.getInstance().init() { status ->
+        USDKManager.getInstance().init { status ->
             val rfidManager = USDKManager.getInstance().rfidManager
             rfidStatus = "${if (status) "SUCCESS" else "FAIL"} at ${rfidManager.outputPower}"
             rfidManager.queryMode = QueryMode.EPC_TID

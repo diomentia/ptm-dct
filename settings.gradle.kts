@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MCM Controller"
+rootProject.name = "PTM Data Collection Terminal"
 include(":app")

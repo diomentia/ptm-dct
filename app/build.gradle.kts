@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "space.diomentia.mcmcontroller"
+    namespace = "space.diomentia.ptm_dct"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "space.diomentia.mcmcontroller"
+        applicationId = "space.diomentia.ptm_dct"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package space.diomentia.mcmcontroller
+package space.diomentia.ptm_dct
 
 import org.junit.Test
 

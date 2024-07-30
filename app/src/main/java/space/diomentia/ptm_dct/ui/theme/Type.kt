@@ -1,4 +1,4 @@
-package space.diomentia.mcmcontroller.ui.theme
+package space.diomentia.ptm_dct.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
