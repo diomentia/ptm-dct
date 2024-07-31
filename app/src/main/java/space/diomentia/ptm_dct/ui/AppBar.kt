@@ -5,12 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material3.MaterialTheme
@@ -19,8 +15,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 
@@ -54,14 +48,14 @@ fun PtmTopBar(
         Surface(
             shape = slanted,
             color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             Row(
                 horizontalArrangement = Arrangement.Start,
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .clipToBounds()
-                    .padding(8.dp)
+                    .padding(16.dp)
             ) {
                 Box(Modifier.padding(horizontal = 8.dp)) {
                     navigation()
@@ -84,7 +78,7 @@ fun PtmTopBar(
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.statusBars)
                         .clipToBounds()
-                        .padding(8.dp)
+                        .padding(16.dp)
                 ) {
                     actions.forEach {
                         Box(
