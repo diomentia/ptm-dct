@@ -21,11 +21,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ubx.usdk.USDKManager
 import com.ubx.usdk.rfid.aidl.IRfidCallback
 import com.ubx.usdk.util.QueryMode
+import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,14 +41,15 @@ class InitialActivity : ComponentActivity() {
             PtmDctTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = { TopAppBar(
+                    topBar = { PtmTopBar(
                         title = { Text(resources.getString(R.string.app_name)) },
-                        colors = TopAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            scrolledContainerColor = MaterialTheme.colorScheme.primary,
-                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                            actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                        titleStyle = TextStyle(
+                            fontSize = 36.sp,
+                            lineHeight = 52.sp,
+                            lineHeightStyle = LineHeightStyle(
+                                alignment = LineHeightStyle.Alignment.Top,
+                                trim = LineHeightStyle.Trim.None
+                            )
                         )
                     ) }
                 ) { innerPadding ->
