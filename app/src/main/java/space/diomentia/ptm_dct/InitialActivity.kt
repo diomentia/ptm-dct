@@ -11,7 +11,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,7 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Nfc
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.sharp.Nfc
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -40,7 +39,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
@@ -79,7 +77,7 @@ class InitialActivity : ComponentActivity() {
                             )
                         },
                         floatingActionButton = {
-                            StartScanButton(size = 96.dp)
+                            StartScanButton(size = 96.dp, roundCorners = false)
                         },
                         floatingActionButtonPosition = FabPosition.Center,
                         snackbarHost = { SnackbarHost(snackbarHostState) {
@@ -128,7 +126,7 @@ private fun StartScanButton(
         contentColor = if (enabled) colors.containerColor else colors.disabledContainerColor
     ) {
         Icon(
-            Icons.Default.Nfc,
+            if (roundCorners) Icons.Default.Nfc else Icons.Sharp.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
             modifier = Modifier
                 .fillMaxSize()
