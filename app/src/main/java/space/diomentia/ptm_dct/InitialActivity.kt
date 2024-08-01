@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.sharp.Nfc
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -51,6 +52,7 @@ import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
+import space.diomentia.ptm_dct.ui.theme.blue_oxford
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 
 class InitialActivity : ComponentActivity() {
@@ -103,10 +105,15 @@ private fun StartScanButton(
     size: Dp = 64.dp,
     roundCorners: Boolean = false
 ) {
-    var enabled by remember { mutableStateOf(true) }
+    var enabled by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
-    val colors = ButtonDefaults.buttonColors()
+    val colors = ButtonColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = Color.Transparent,
+        disabledContainerColor = blue_oxford.copy(alpha = .75f),
+        disabledContentColor = Color.Transparent
+    )
     Surface(
         modifier = Modifier
             .size(size)
@@ -122,7 +129,7 @@ private fun StartScanButton(
             .then(modifier),
         shape = RoundedCornerShape(if (roundCorners) 25 else 0),
         border = BorderStroke(size / 16, if (enabled) colors.containerColor else colors.disabledContainerColor),
-        color = Color.Transparent,
+        color = if (enabled) colors.contentColor else colors.disabledContentColor,
         contentColor = if (enabled) colors.containerColor else colors.disabledContainerColor
     ) {
         Icon(
