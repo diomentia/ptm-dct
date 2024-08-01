@@ -1,6 +1,8 @@
 package space.diomentia.ptm_dct
 
+import android.device.DeviceManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -46,7 +48,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.ubx.usdk.USDKManager
+import com.ubx.usdk.rfid.RfidManager
 import kotlinx.coroutines.launch
+import space.diomentia.ptm_dct.data.LocalRfidManager
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
@@ -63,7 +68,21 @@ class InitialActivity : ComponentActivity() {
         setContent {
             PtmDctTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
-                CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+                var rfidManager by remember { mutableStateOf<RfidManager?>(null) }
+                try {
+                    DeviceManager().deviceId
+                    USDKManager.getInstance().init() { status ->
+                        if (status) {
+                            rfidManager = USDKManager.getInstance().rfidManager
+                        }
+                    }
+                } catch (stub: RuntimeException) {
+                    Log.e("RFID Init", "This is not an Urovo device")
+                }
+                CompositionLocalProvider(
+                    LocalSnackbarHostState provides snackbarHostState,
+                    LocalRfidManager provides rfidManager
+                ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = {
@@ -103,7 +122,8 @@ private fun StartScanButton(
     size: Dp = 64.dp,
     roundCorners: Boolean = false
 ) {
-    var enabled by remember { mutableStateOf(true) }
+    var enabled by remember { mutableStateOf(false) }
+    enabled = LocalRfidManager.current != null
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
     val colors = ButtonDefaults.buttonColors()
@@ -144,7 +164,7 @@ fun Contents(
             .fillMaxSize()
             .padding(24.dp)
             .then(modifier),
-        verticalArrangement = Arrangement.SpaceEvenly,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SideArrowContainer(
