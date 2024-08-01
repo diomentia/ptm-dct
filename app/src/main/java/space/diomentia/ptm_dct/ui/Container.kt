@@ -1,8 +1,10 @@
 package space.diomentia.ptm_dct.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +34,8 @@ private fun getWindowSize(): Size {
 @Composable
 fun SideArrowContainer(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.secondary,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     toRight: Boolean = true,
     slantFactor: Int = 8,
     content: @Composable () -> Unit
@@ -49,7 +52,7 @@ fun SideArrowContainer(
                 Path().apply {
                     moveTo(-absCoordinates.x, 0f)
                     lineTo(screenSize.width * (1f - slant) - absCoordinates.x, 0f)
-                    lineTo(screenSize.width - absCoordinates.x, size.height / 2f)
+                    lineTo(screenSize.width - absCoordinates.x * (1 + slant), size.height / 2f)
                     lineTo(screenSize.width * (1f - slant) - absCoordinates.x, size.height)
                     lineTo(-absCoordinates.x, size.height)
                 }
@@ -57,24 +60,27 @@ fun SideArrowContainer(
                 Path().apply {
                     moveTo(screenSize.width - absCoordinates.x, 0f)
                     lineTo(screenSize.width * slant - absCoordinates.x, 0f)
-                    lineTo(-absCoordinates.x, size.height / 2f)
+                    lineTo(-absCoordinates.x * (1 - slant), size.height / 2f)
                     lineTo(screenSize.width * slant - absCoordinates.x, size.height)
                     lineTo(screenSize.width - absCoordinates.x, size.height)
                 }
             onDrawBehind {
-                drawPath(sideArrow, color)
+                drawPath(sideArrow, containerColor)
             }
         }
         .then(modifier)
     ) {
-        content()
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            content()
+        }
     }
 }
 
 @Composable
 fun DownArrowContainer(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.secondary,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     slantFactor: Int = 10,
     content: @Composable () -> Unit
 ) {
@@ -94,11 +100,13 @@ fun DownArrowContainer(
                 lineTo(screenSize.width - absCoordinates.x, -absCoordinates.y)
             }
             onDrawBehind {
-                drawPath(downArrow, color)
+                drawPath(downArrow, containerColor)
             }
         }
         .then(modifier)
     ) {
-        content()
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            content()
+        }
     }
 }

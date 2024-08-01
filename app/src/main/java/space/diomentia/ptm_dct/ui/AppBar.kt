@@ -15,14 +15,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PtmTopBar(
     title: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    titleStyle: TextStyle = TextStyle(),
     navigation: @Composable () -> Unit = {},
     actions: Array<@Composable () -> Unit> = arrayOf(),
 ) {
@@ -61,7 +59,7 @@ fun PtmTopBar(
                     navigation()
                 }
                 Box(Modifier.padding(horizontal = 8.dp)) {
-                    ProvideTextStyle(MaterialTheme.typography.titleLarge.plus(titleStyle)) {
+                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                         title()
                     }
                 }

@@ -10,9 +10,12 @@ private val PtmColorScheme = darkColorScheme(
     secondary = green_haze,
     onSecondary = white,
     tertiary = blue_cerulean,
-    onTertiary = white,
+    onTertiary = blue_zodiac,
     background = blue_zodiac,
-    onBackground = white
+    onBackground = white,
+    surface = green_haze,
+    onSurface = white,
+    surfaceContainer = blue_oxford
 )
 
 @Composable
