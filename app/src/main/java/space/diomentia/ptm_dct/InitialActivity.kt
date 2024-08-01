@@ -53,6 +53,7 @@ import com.ubx.usdk.rfid.RfidManager
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalRfidManager
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
@@ -68,12 +69,11 @@ class InitialActivity : ComponentActivity() {
         setContent {
             PtmDctTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
-                var rfidManager by remember { mutableStateOf<RfidManager?>(null) }
                 try {
                     DeviceManager().deviceId
                     USDKManager.getInstance().init() { status ->
                         if (status) {
-                            rfidManager = USDKManager.getInstance().rfidManager
+                            Session.rfidManager = USDKManager.getInstance().rfidManager
                         }
                     }
                 } catch (stub: RuntimeException) {
@@ -81,7 +81,6 @@ class InitialActivity : ComponentActivity() {
                 }
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
-                    LocalRfidManager provides rfidManager
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -113,6 +112,29 @@ class InitialActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        Session.rfidManager = null
+        if (USDKManager.getInstance().rfidManager == null) {
+            try {
+                DeviceManager().deviceId
+                USDKManager.getInstance().init() { status ->
+                    if (status) {
+                        Session.rfidManager = USDKManager.getInstance().rfidManager
+                    }
+                }
+            } catch (stub: RuntimeException) {
+                Log.e("RFID Init", "This is not an Urovo device")
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Session.rfidManager = null
+        USDKManager.getInstance().disConnect()
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -124,6 +146,7 @@ private fun StartScanButton(
 ) {
     var enabled by remember { mutableStateOf(false) }
     enabled = LocalRfidManager.current != null
+    val rfidManager = LocalRfidManager.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
     val colors = ButtonDefaults.buttonColors()
@@ -136,7 +159,9 @@ private fun StartScanButton(
             ) { /*TODO*/
                 coroutineScope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar("yippie")
+                    snackbarHostState.showSnackbar("RFID reader status: ${
+                        if (rfidManager?.isLive == true) "online!" else "offline :("
+                    }")
                 }
             }
             .then(modifier),
