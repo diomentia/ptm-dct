@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -18,11 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Nfc
-import androidx.compose.material.icons.sharp.Nfc
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -46,7 +41,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ubx.usdk.USDKManager
 import com.ubx.usdk.rfid.RfidManager
@@ -56,6 +50,7 @@ import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
+import space.diomentia.ptm_dct.ui.SquareOutlinedButton
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 
@@ -95,7 +90,7 @@ class InitialActivity : ComponentActivity() {
                             )
                         },
                         floatingActionButton = {
-                            StartScanButton(size = 96.dp, roundCorners = false)
+                            StartScanButton()
                         },
                         floatingActionButtonPosition = FabPosition.Center,
                         snackbarHost = { SnackbarHost(snackbarHostState) {
@@ -140,23 +135,21 @@ class InitialActivity : ComponentActivity() {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StartScanButton(
-    modifier: Modifier = Modifier,
-    size: Dp = 64.dp,
-    roundCorners: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     var enabled by remember { mutableStateOf(false) }
     enabled = LocalRfidManager.current != null
     val rfidManager = LocalRfidManager.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
-    val colors = ButtonDefaults.buttonColors()
-    Surface(
+    SquareOutlinedButton(
+        roundedCorners = true,
+        enabled = enabled,
         modifier = Modifier
-            .size(size)
             .combinedClickable(
                 enabled = enabled,
                 onClickLabel = stringResource(R.string.button_start_rfid_search)
-            ) { /*TODO*/
+            ) { /* TODO */
                 coroutineScope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar("RFID reader status: ${
@@ -164,18 +157,13 @@ private fun StartScanButton(
                     }")
                 }
             }
-            .then(modifier),
-        shape = RoundedCornerShape(if (roundCorners) 25 else 0),
-        border = BorderStroke(size / 16, if (enabled) colors.containerColor else colors.disabledContainerColor),
-        color = Color.Transparent,
-        contentColor = if (enabled) colors.containerColor else colors.disabledContainerColor
+            .then(modifier)
     ) {
         Icon(
-            if (roundCorners) Icons.Default.Nfc else Icons.Sharp.Nfc,
+            Icons.Default.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
             modifier = Modifier
-                .fillMaxSize()
-                .padding(size / 8)
+                .size(64.dp)
         )
     }
 }
@@ -206,6 +194,7 @@ fun Contents(
                     .fillMaxSize()
             )
         }
+        // TODO: segmented button USB/Bluetooth
     }
 }
 
