@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PtmTopBar(
     title: @Composable () -> Unit,
-    titleStyle: TextStyle = TextStyle(),
     modifier: Modifier = Modifier,
+    titleStyle: TextStyle = TextStyle(),
     navigation: @Composable () -> Unit = {},
     actions: Array<@Composable () -> Unit> = arrayOf(),
 ) {
