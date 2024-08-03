@@ -12,12 +12,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -38,12 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ubx.usdk.USDKManager
-import com.ubx.usdk.rfid.RfidManager
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalRfidManager
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -64,16 +66,6 @@ class InitialActivity : ComponentActivity() {
         setContent {
             PtmDctTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
-                try {
-                    DeviceManager().deviceId
-                    USDKManager.getInstance().init() { status ->
-                        if (status) {
-                            Session.rfidManager = USDKManager.getInstance().rfidManager
-                        }
-                    }
-                } catch (stub: RuntimeException) {
-                    Log.e("RFID Init", "This is not an Urovo device")
-                }
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
                 ) {
@@ -90,7 +82,14 @@ class InitialActivity : ComponentActivity() {
                             )
                         },
                         floatingActionButton = {
-                            StartScanButton()
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                BluetoothPairingButton()
+                                StartScanButton()
+                            }
                         },
                         floatingActionButtonPosition = FabPosition.Center,
                         snackbarHost = { SnackbarHost(snackbarHostState) {
@@ -127,6 +126,7 @@ class InitialActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        Session.rfidManager?.stopInventory()
         Session.rfidManager = null
         USDKManager.getInstance().disConnect()
     }
@@ -140,6 +140,7 @@ private fun StartScanButton(
     var enabled by remember { mutableStateOf(false) }
     enabled = LocalRfidManager.current != null
     val rfidManager = LocalRfidManager.current
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
     SquareOutlinedButton(
@@ -147,14 +148,25 @@ private fun StartScanButton(
         enabled = enabled,
         modifier = Modifier
             .combinedClickable(
-                enabled = enabled,
-                onClickLabel = stringResource(R.string.button_start_rfid_search)
+                enabled = true,
+                onClickLabel = stringResource(R.string.button_start_rfid_search),
+                onLongClick = {
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.button_start_rfid_search)
+                        )
+                    }
+                }
             ) { /* TODO */
-                coroutineScope.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar("RFID reader status: ${
-                        if (rfidManager?.isLive == true) "online!" else "offline :("
-                    }")
+                if (!enabled) {
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.wait_for_rfid_manager)
+                        )
+                    }
+                    return@combinedClickable
                 }
             }
             .then(modifier)
@@ -162,6 +174,52 @@ private fun StartScanButton(
         Icon(
             Icons.Default.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
+            modifier = Modifier
+                .size(64.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun BluetoothPairingButton(
+    modifier: Modifier = Modifier
+) {
+    var enabled by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = LocalSnackbarHostState.current
+    SquareOutlinedButton(
+        roundedCorners = true,
+        enabled = enabled,
+        modifier = Modifier
+            .combinedClickable(
+                enabled = true,
+                onClickLabel = stringResource(R.string.button_bluetooth_pairing),
+                onLongClick = {
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.button_bluetooth_pairing)
+                        )
+                    }
+                }
+            ) {
+                if (!enabled) {
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.turn_on_bluetooth)
+                        )
+                    }
+                    return@combinedClickable
+                }
+            }
+            .then(modifier)
+    ) {
+        Icon(
+            Icons.Default.Bluetooth,
+            contentDescription = stringResource(R.string.button_bluetooth_pairing),
             modifier = Modifier
                 .size(64.dp)
         )
