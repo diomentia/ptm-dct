@@ -1,9 +1,8 @@
 package space.diomentia.ptm_dct.data
 
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.compositionLocalOf
-import com.ubx.usdk.rfid.RfidManager
+import androidx.compose.runtime.staticCompositionLocalOf
 
-val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
+val LocalSnackbarHostState = staticCompositionLocalOf {
     SnackbarHostState()
 }

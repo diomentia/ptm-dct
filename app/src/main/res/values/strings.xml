@@ -4,5 +4,10 @@
     <string name="button_start_rfid_search">Начать поиск RFID метки</string>
     <string name="wait_for_rfid_manager">Подключение к считывателю RFID, подождите...</string>
     <string name="button_bluetooth_pairing">Начать сопряжение с Bluetooth устройством</string>
-    <string name="turn_on_bluetooth">Пожалуйста, включите Bluetooth на устройстве</string>
+    <string name="please_turn_on_bluetooth">Пожалуйста, включите Bluetooth на устройстве</string>
+    <string name="password">Пароль</string>
+    <string name="connect">Подключение</string>
+    <string name="input_password">Введите пароль</string>
+    <string name="find_rfid_tag">Найдите метку RFID и просканируйте её</string>
+    <string name="pair_bluetooth">Подключитесь к КИП по Bluetooth</string>
 </resources>
