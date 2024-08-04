@@ -7,7 +7,3 @@ import com.ubx.usdk.rfid.RfidManager
 val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
     SnackbarHostState()
 }
-
-val LocalRfidManager = compositionLocalOf<RfidManager?> {
-    null
-}

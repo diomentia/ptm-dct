@@ -5,6 +5,4 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.ubx.usdk.rfid.RfidManager
 
-object Session {
-    var rfidManager by mutableStateOf<RfidManager?>(null)
-}
+object Session {}

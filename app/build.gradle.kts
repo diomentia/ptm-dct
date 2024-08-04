@@ -62,6 +62,7 @@ dependencies {
     implementation(files("libs/platform_sdk_v4.1.0326.jar"))
     implementation(files("libs/USDKLibrary-v2.3.0628.aar"))
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.lifecycle.process)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
