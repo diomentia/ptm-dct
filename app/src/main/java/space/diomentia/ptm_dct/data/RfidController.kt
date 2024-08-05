@@ -29,7 +29,8 @@ object RfidController : DefaultLifecycleObserver {
     var isAvailable by mutableStateOf(false)
         private set
 
-    private val passwd = "00000000"
+    private const val PASSWD = "00000000"
+    private const val DEFAULT_LENGTH: Byte = 6
 
     private var mManager: RfidManager? = null
     private var mListener: RfidListener? = null
@@ -58,13 +59,13 @@ object RfidController : DefaultLifecycleObserver {
                     if (data == null) {
                         return
                     }
-                    var tag = RfidTag(data, epc ?: "")
+                    val tag = RfidTag(data, epc ?: "")
                     tag.userData = manager.readDataByTid(
                         tag.tid,
                         3,
                         0,
-                        -1,
-                        passwd
+                        DEFAULT_LENGTH,
+                        PASSWD
                     )
                     mListener!!.onTagFound(tag)
                 }
@@ -99,15 +100,15 @@ object RfidController : DefaultLifecycleObserver {
                     tid,
                     2,
                     0,
-                    -1,
-                    passwd
+                    DEFAULT_LENGTH,
+                    PASSWD
                 ),
                 manager.readDataByTid(
                     tid,
                     2,
                     0,
-                    -1,
-                    passwd
+                    DEFAULT_LENGTH,
+                    PASSWD
                 )
             )
         }
@@ -122,8 +123,8 @@ object RfidController : DefaultLifecycleObserver {
             tid,
             3,
             0,
-            BaseReader().hexStringToBytes(passwd),
-            userData
+            BaseReader().hexStringToBytes(PASSWD),
+            userData.takeLast(DEFAULT_LENGTH.toInt())
         )
     }
 
