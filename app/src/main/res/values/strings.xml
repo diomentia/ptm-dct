@@ -10,4 +10,7 @@
     <string name="input_password">Введите пароль</string>
     <string name="find_rfid_tag">Найдите метку RFID и просканируйте её</string>
     <string name="pair_bluetooth">Подключитесь к КИП по Bluetooth</string>
+    <string name="tag_not_found">Метка не найдена</string>
+    <string name="cancel">Отмена</string>
+    <string name="accept_tag">Взять метку</string>
 </resources>

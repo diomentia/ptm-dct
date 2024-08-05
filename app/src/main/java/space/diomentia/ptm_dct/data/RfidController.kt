@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.rfid.trans.BaseReader
 import com.ubx.usdk.USDKManager
 import com.ubx.usdk.rfid.RfidManager
 import com.ubx.usdk.rfid.aidl.IRfidCallback
@@ -21,12 +22,14 @@ object RfidController : DefaultLifecycleObserver {
     )
 
     interface RfidListener {
-        fun onTagFound(tag: RfidTag)
+        fun onTagFound(tag: RfidTag?)
         fun onReadStopped()
     }
 
     var isAvailable by mutableStateOf(false)
         private set
+
+    private val passwd = "00000000"
 
     private var mManager: RfidManager? = null
     private var mListener: RfidListener? = null
@@ -43,39 +46,38 @@ object RfidController : DefaultLifecycleObserver {
         resumeRead()
     }
 
-    private fun resumeRead() {
-        if (mListener != null) {
-            if (mManager == null) {
-                stopRead()
-                return
-            }
-            mManager!!.let { manager ->
-                manager.queryMode = QueryMode.EPC_TID
-                manager.registerCallback(object : IRfidCallback {
-                    override fun onInventoryTag(epc: String?, data: String?, rssi: String?) {
-                        if (data == null) {
-                            return
-                        }
-                        var tag = RfidTag(data, epc ?: "")
-                        tag.userData = manager.readDataByTid(
-                            tag.tid,
-                            3,
-                            0,
-                            3,
-                            "00000000"
-                        )
-                        mListener!!.onTagFound(tag)
+    fun resumeRead() {
+        if (!isAvailable || mManager == null || mListener == null) {
+            stopRead()
+            return
+        }
+        mManager!!.let { manager ->
+            manager.queryMode = QueryMode.EPC_TID
+            manager.registerCallback(object : IRfidCallback {
+                override fun onInventoryTag(epc: String?, data: String?, rssi: String?) {
+                    if (data == null) {
+                        return
                     }
-                    override fun onInventoryTagEnd() {
-                        stopRead()
-                    }
-                })
-                manager.startRead()
-            }
+                    var tag = RfidTag(data, epc ?: "")
+                    tag.userData = manager.readDataByTid(
+                        tag.tid,
+                        3,
+                        0,
+                        -1,
+                        passwd
+                    )
+                    mListener!!.onTagFound(tag)
+                }
+
+                override fun onInventoryTagEnd() {
+                    stopRead()
+                }
+            })
+            manager.startRead()
         }
     }
 
-    private fun pauseRead() {
+    fun pauseRead() {
         mManager?.stopInventory()
     }
 
@@ -83,6 +85,46 @@ object RfidController : DefaultLifecycleObserver {
         pauseRead()
         mListener?.onReadStopped()
         mListener = null
+    }
+
+    fun readByTid(tid: String): RfidTag? {
+        if (!isAvailable || mManager == null) {
+            return null
+        }
+        var tag: RfidTag? = null
+        mManager?.let { manager ->
+            tag = RfidTag(
+                tid,
+                manager.readDataByTid(
+                    tid,
+                    2,
+                    0,
+                    -1,
+                    passwd
+                ),
+                manager.readDataByTid(
+                    tid,
+                    2,
+                    0,
+                    -1,
+                    passwd
+                )
+            )
+        }
+        return tag
+    }
+
+    fun writeDataByTid(tid: String, userData: String) {
+        if (!isAvailable || mManager == null) {
+            return
+        }
+        mManager?.writeTagByTid(
+            tid,
+            3,
+            0,
+            BaseReader().hexStringToBytes(passwd),
+            userData
+        )
     }
 
     override fun onStart(owner: LifecycleOwner) {

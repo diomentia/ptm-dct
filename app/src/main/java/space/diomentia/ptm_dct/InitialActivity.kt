@@ -203,11 +203,23 @@ private fun StartScanButton(
     modifier: Modifier = Modifier
 ) {
     val currentStep = LocalStep.current.value
-    if (currentStep == Step.RfidManager && RfidController.isAvailable) {
+    if (currentStep == Step.RfidManager && RfidController.isAvailable ||
+        currentStep == Step.RfidTag && Session.rfidTag != null) {
         LocalStep.current.value = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
     enabled = currentStep >= Step.RfidTag
+
+    var showDialog by remember { mutableStateOf(false) }
+    if (enabled && showDialog) {
+        RfidScanDialog(
+            onDismissRequest = { showDialog = false },
+            onConfirmation = { tag ->
+                Session.rfidTag = tag
+            }
+        )
+    }
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
@@ -226,11 +238,12 @@ private fun StartScanButton(
                         )
                     }
                 }
-            ) { /* TODO */
+            ) {
                 if (!enabled) {
                     stepHint(currentStep, context, snackbarHostState, coroutineScope)
                     return@combinedClickable
                 }
+                showDialog = true
             }
             .then(modifier)
     ) {
