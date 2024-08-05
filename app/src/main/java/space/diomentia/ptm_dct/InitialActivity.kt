@@ -216,6 +216,7 @@ private fun StartScanButton(
             onDismissRequest = { showDialog = false },
             onConfirmation = { tag ->
                 Session.rfidTag = tag
+                showDialog = false
             }
         )
     }

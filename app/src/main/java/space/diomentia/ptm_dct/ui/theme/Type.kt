@@ -117,6 +117,13 @@ val Typography = Typography(
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
+    bodyMedium = TextStyle(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.Normal,
+        fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.2.sp
+    ),
     titleLarge = TextStyle(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,

@@ -64,7 +64,7 @@ fun RfidScanDialog(
                     }
                 }
                 .padding(24.dp)
-                .defaultMinSize(minHeight = 150.dp),
+                .defaultMinSize(minHeight = 200.dp),
             shape = RectangleShape,
             color = MaterialTheme.colorScheme.background,
             contentColor = blue_robins_egg
@@ -79,11 +79,20 @@ fun RfidScanDialog(
                     verticalArrangement = Arrangement.Top
                 ) {
                     val textPadding = Modifier.padding(8.dp)
+                    val textStyle = MaterialTheme.typography.bodyMedium
                     if (currentTag == null) {
                         Text(stringResource(R.string.tag_not_found), textPadding)
                     } else {
-                        Text("EPC: ${currentTag?.epc}", textPadding)
-                        Text("Data: ${currentTag?.userData}", textPadding)
+                        Text(
+                            "EPC: ${currentTag?.epc}",
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            "Data: ${currentTag?.userData}",
+                            textPadding,
+                            style = textStyle
+                        )
                     }
                 }
                 Row(
@@ -111,7 +120,9 @@ fun RfidScanDialog(
     LaunchedEffect(Unit) {
         RfidController.startRead(object : RfidController.RfidListener {
             override fun onTagFound(tag: RfidController.RfidTag?) {
-                currentTag = tag
+                if (tag != currentTag) {
+                    currentTag = tag
+                }
             }
             override fun onReadStopped() {
                 dismiss()
