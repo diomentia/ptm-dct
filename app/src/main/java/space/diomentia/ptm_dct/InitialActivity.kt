@@ -61,7 +61,7 @@ import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
 
 private enum class Step {
-    Password, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
+    Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
 
     fun next(): Step = entries[this.ordinal + 1]
 }
@@ -164,6 +164,9 @@ fun Contents(
         } else if (LocalStep.current.value == Step.Password) {
             LocalStep.current.value = LocalStep.current.value.next()
         }
+        if (LocalStep.current.value == Step.UserLevel && Session.userLevel > Session.AccessLevel.Guest) {
+            LocalStep.current.value = LocalStep.current.value.next()
+        }
         Row(
             modifier = Modifier
                 .padding(vertical = 16.dp)
@@ -185,6 +188,7 @@ private fun stepHint(
     val message = context.getString(
         when (currentStep) {
             Step.Password -> R.string.input_password
+            Step.UserLevel -> R.string.wrong_password
             Step.RfidManager -> R.string.wait_for_rfid_manager
             Step.RfidTag -> R.string.find_rfid_tag
             Step.BluetoothTurnOn -> R.string.please_turn_on_bluetooth

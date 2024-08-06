@@ -27,7 +27,6 @@ fun PtmTopBar(
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
-            .clipToBounds()
             .fillMaxWidth()
             .then(modifier)
     ) {
