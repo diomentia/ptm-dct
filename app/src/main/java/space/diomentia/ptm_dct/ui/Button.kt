@@ -1,11 +1,9 @@
 package space.diomentia.ptm_dct.ui
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
@@ -19,11 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
 
@@ -47,6 +43,8 @@ fun PtmOutlinedButton(
     val density = LocalDensity.current
     val buttonShape: Shape = RoundedCornerShape(if (roundedCorners) 25 else 0)
     var buttonMinSize by remember { mutableStateOf(0.dp) }
+    val contentColor by animateColorAsState(if (enabled) colors.contentColor else colors.disabledContentColor)
+    val containerColor by animateColorAsState(if (enabled) colors.containerColor else colors.containerColor)
     Surface(
         modifier = Modifier
             .clip(buttonShape)
@@ -65,10 +63,10 @@ fun PtmOutlinedButton(
         shape = buttonShape,
         border = BorderStroke(
             width = buttonMinSize / 16,
-            color = if (enabled) colors.contentColor else colors.disabledContentColor
+            color = contentColor
         ),
-        color = if (enabled) colors.containerColor else colors.containerColor,
-        contentColor = if (enabled) colors.contentColor else colors.disabledContentColor
+        color = containerColor,
+        contentColor = contentColor
     ) {
         Box(Modifier.padding(buttonMinSize / 8)) {
             content()

@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -46,8 +49,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -57,6 +62,7 @@ import space.diomentia.ptm_dct.ui.PtmOutlinedButton
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
+import space.diomentia.ptm_dct.ui.theme.blue_oxford
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
 
@@ -121,6 +127,7 @@ class InitialActivity : ComponentActivity() {
 fun Contents(
     modifier: Modifier = Modifier
 ) {
+    var currentStep by LocalStep.current
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -142,6 +149,11 @@ fun Contents(
                     .fillMaxSize()
             )
         }
+        StepHelper(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        )
         // TODO: segmented button USB/Bluetooth
         Spacer(Modifier.weight(1f))
         TextField(
@@ -160,12 +172,14 @@ fun Contents(
             onValueChange = { Session.userPassword = it }
         )
         if (Session.userPassword == "") {
-            LocalStep.current.value = Step.Password
-        } else if (LocalStep.current.value == Step.Password) {
-            LocalStep.current.value = LocalStep.current.value.next()
+            currentStep = Step.Password
+        } else if (currentStep == Step.Password) {
+            currentStep = currentStep.next()
         }
-        if (LocalStep.current.value == Step.UserLevel && Session.userLevel > Session.AccessLevel.Guest) {
-            LocalStep.current.value = LocalStep.current.value.next()
+        if (currentStep >= Step.UserLevel && Session.userLevel <= Session.AccessLevel.Guest) {
+            currentStep = Step.UserLevel
+        } else if (currentStep == Step.UserLevel) {
+            currentStep = currentStep.next()
         }
         Row(
             modifier = Modifier
@@ -201,15 +215,69 @@ private fun stepHint(
     }
 }
 
+@Composable
+private fun StepHelper(
+    modifier: Modifier = Modifier
+) {
+    data class StepHint(val hintResource: Int, val step: Step, val isMain: Boolean = false)
+    val stepHints = remember {
+        arrayOf(
+            StepHint(R.string.input_password, Step.Password, true),
+            StepHint(R.string.wrong_password, Step.UserLevel),
+            StepHint(R.string.wait_for_rfid_manager, Step.RfidManager),
+            StepHint(R.string.find_rfid_tag, Step.RfidTag, true),
+            StepHint(R.string.please_turn_on_bluetooth, Step.BluetoothTurnOn),
+            StepHint(R.string.pair_bluetooth, Step.BluetoothPair, true)
+        )
+    }
+    Column(
+        modifier,
+        horizontalAlignment = Alignment.Start
+    ) {
+        var mainIndex = 0
+        for ((index, hint) in stepHints.withIndex()) {
+            val stepState = LocalStep.current.value.ordinal - hint.step.ordinal
+            val text = (remember(index) { if (hint.isMain) "${++mainIndex}. " else "" }
+                    + stringResource(hint.hintResource))
+            val color by animateColorAsState(
+                if (hint.isMain) {
+                    if (stepState == 0) white else blue_oxford
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
+                label = hint.hintResource.toString()
+            )
+            val fontSize = animateIntAsState(
+                if (hint.isMain && stepState == 0) 20 else 14,
+                label = hint.hintResource.toString()
+            )
+            AnimatedVisibility(
+                hint.isMain && stepState > 0 || stepState == 0,
+                label = hint.hintResource.toString()
+            ) {
+                Text(
+                    text = text,
+                    color = color,
+                    fontWeight = if (hint.isMain && stepState == 0) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = fontSize.value.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(4.dp)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StartScanButton(
     modifier: Modifier = Modifier
 ) {
-    val currentStep = LocalStep.current.value
+    var currentStep by LocalStep.current
     if (currentStep == Step.RfidManager && RfidController.isAvailable ||
         currentStep == Step.RfidTag && Session.rfidTag != null) {
-        LocalStep.current.value = currentStep.next()
+        currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
     enabled = currentStep >= Step.RfidTag
@@ -266,10 +334,10 @@ private fun StartScanButton(
 private fun BluetoothPairingButton(
     modifier: Modifier = Modifier
 ) {
-    val currentStep = LocalStep.current.value
+    var currentStep by LocalStep.current
     // TODO
     if (currentStep == Step.BluetoothTurnOn && false) {
-        LocalStep.current.value = currentStep.next()
+        currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
     enabled = currentStep >= Step.BluetoothPair

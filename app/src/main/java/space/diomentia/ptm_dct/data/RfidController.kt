@@ -28,6 +28,8 @@ object RfidController : DefaultLifecycleObserver {
 
     var isAvailable by mutableStateOf(false)
         private set
+    var isReading by mutableStateOf(false)
+        private set
 
     private const val PASSWD = "00000000"
     private const val DEFAULT_LENGTH: Byte = 6
@@ -44,6 +46,7 @@ object RfidController : DefaultLifecycleObserver {
     ) {
         stopRead()
         mListener = listener
+        isReading = true
         resumeRead()
     }
 
@@ -84,8 +87,11 @@ object RfidController : DefaultLifecycleObserver {
 
     fun stopRead() {
         pauseRead()
-        mListener?.onReadStopped()
-        mListener = null
+        if (isReading) {
+            isReading = false
+            mListener?.onReadStopped()
+            mListener = null
+        }
     }
 
     fun readByTid(tid: String): RfidTag? {
