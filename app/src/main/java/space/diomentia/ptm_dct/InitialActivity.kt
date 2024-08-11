@@ -248,7 +248,7 @@ private fun StepHelper(
                 label = hint.hintResource.toString()
             )
             val fontSize = animateIntAsState(
-                if (hint.isMain && stepState == 0) 20 else 14,
+                if (hint.isMain && stepState == 0) 16 else 14,
                 label = hint.hintResource.toString()
             )
             AnimatedVisibility(
