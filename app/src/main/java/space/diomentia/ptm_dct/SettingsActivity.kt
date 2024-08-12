@@ -1,10 +1,13 @@
 package space.diomentia.ptm_dct
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,25 +20,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.ApplicationSettings
+import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.PasswordHash
+import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.ui.BorderedDialogContainer
 import space.diomentia.ptm_dct.ui.PtmTopBar
+import space.diomentia.ptm_dct.ui.makeSnackbarMessage
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
@@ -47,36 +60,60 @@ class SettingsActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(blue_zodiac.copy(alpha = .25f).toArgb()),
             navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
         )
+        val snackbarHostState = SnackbarHostState()
         setContent {
             PtmDctTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        PtmTopBar(
-                            title = {
-                                Text(
-                                    resources.getString(R.string.settings),
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            }
+                CompositionLocalProvider(
+                    LocalSnackbarHostState provides snackbarHostState
+                ) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        topBar = {
+                            PtmTopBar(
+                                title = {
+                                    Text(
+                                        resources.getString(R.string.settings),
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                }
+                            )
+                        },
+                        snackbarHost = { SnackbarHost(snackbarHostState) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            Snackbar(
+                                it,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.clickable(
+                                    interactionSource = interactionSource,
+                                    indication = null
+                                ) {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                }
+                            )
+                        } }
+                    ) { innerPadding ->
+                        val colors = ListItemDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.background
                         )
-                    }
-                ) { innerPadding ->
-                    val colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    )
-                    var showDialog by remember { mutableStateOf(false) }
-                    if (showDialog) {
-                        ChangePasswordDialog(onDismissRequest = { showDialog = false })
-                    }
-                    Column(
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        SettingsMenuLink(
-                            title = { Text(stringResource(R.string.change_password)) },
-                            colors = colors
+                        var showChangePasswordDialog by remember { mutableStateOf(false) }
+                        if (showChangePasswordDialog) {
+                            ChangePasswordDialog(onDismissRequest = { showChangePasswordDialog = false })
+                        }
+                        val accessSnackbar = makeSnackbarMessage(stringResource(R.string.access_denied))
+                        Column(
+                            modifier = Modifier.padding(innerPadding)
                         ) {
-                            showDialog = true
+                            SettingsMenuLink(
+                                title = { Text(stringResource(R.string.change_password)) },
+                                colors = colors
+                            ) {
+                                if (Session.userLevel >= Session.AccessLevel.Admin) {
+                                    showChangePasswordDialog = true
+                                } else {
+                                    accessSnackbar()
+                                }
+                            }
                         }
                     }
                 }

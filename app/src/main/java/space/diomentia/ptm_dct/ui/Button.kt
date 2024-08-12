@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -48,16 +47,8 @@ fun PtmOutlinedButton(
     Surface(
         modifier = Modifier
             .clip(buttonShape)
-            .onSizeChanged { size ->
-                val newSize = with(density) {
-                    min(
-                        size.width.toDp(),
-                        size.height.toDp()
-                    )
-                }
-                if (newSize != buttonMinSize) {
-                    buttonMinSize = newSize
-                }
+            .getActualSize {
+                buttonMinSize = min(it.width, it.height)
             }
             .then(modifier),
         shape = buttonShape,

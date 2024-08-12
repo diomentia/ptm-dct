@@ -84,9 +84,9 @@ class InitialActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(blue_zodiac.copy(alpha = .25f).toArgb()),
             navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
         )
+        val snackbarHostState = SnackbarHostState()
         setContent {
             PtmDctTheme {
-                val snackbarHostState = remember { SnackbarHostState() }
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
                     LocalStep provides remember { mutableStateOf(Step.Password) }
@@ -97,8 +97,7 @@ class InitialActivity : ComponentActivity() {
                             PtmTopBar(
                                 title = {
                                     Text(
-                                        resources.getString(R.string.app_name),
-                                        style = MaterialTheme.typography.titleLarge
+                                        resources.getString(R.string.app_name)
                                     )
                                 },
                                 actions = {
@@ -149,7 +148,7 @@ fun Contents(
     var currentStep by LocalStep.current
     Column(
         modifier = Modifier
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 24.dp)
             .then(modifier),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally

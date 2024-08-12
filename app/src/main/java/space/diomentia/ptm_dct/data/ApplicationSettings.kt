@@ -45,6 +45,9 @@ object ApplicationSettings {
     var passwordAdmin: PasswordHash
         get() = PasswordHash(sharedPreferences.getString(keyPasswordAdmin, "")!!)
         set(value) {
+            if (PasswordHash.encrypt(Session.userPassword) != passwordAdmin) {
+                return
+            }
             with(sharedPreferences.edit()) {
                 putString(keyPasswordAdmin, value.hash)
                 apply()

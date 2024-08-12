@@ -18,4 +18,6 @@
     <string name="new_password">Новый пароль</string>
     <string name="confirm">Принять</string>
     <string name="change_password">Сменить пароль</string>
+    <string name="access_denied">Недостаточный уровень доступа</string>
+    <string name="password_changed">Пароль сменён на \"%s\"</string>
 </resources>
