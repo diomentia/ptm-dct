@@ -22,7 +22,7 @@ fun PtmTopBar(
     title: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     navigation: @Composable () -> Unit = {},
-    actions: Array<@Composable () -> Unit> = arrayOf(),
+    actions: (@Composable () -> Unit)? = null,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,27 +64,19 @@ fun PtmTopBar(
                 }
             }
         }
-        if (actions.isNotEmpty()) {
+        if (actions != null) {
             Surface(
                 shape = backSlanted,
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.End,
+                Box(
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.statusBars)
                         .clipToBounds()
                         .padding(16.dp)
                 ) {
-                    actions.forEach {
-                        Box(
-                            Modifier
-                                .padding(8.dp)
-                        ) {
-                            it()
-                        }
-                    }
+                    actions()
                 }
             }
         }

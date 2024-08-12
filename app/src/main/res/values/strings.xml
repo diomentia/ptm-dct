@@ -15,4 +15,7 @@
     <string name="accept_tag">Взять метку</string>
     <string name="wrong_password">Введён неверный пароль</string>
     <string name="settings">Настройки</string>
+    <string name="new_password">Новый пароль</string>
+    <string name="confirm">Принять</string>
+    <string name="change_password">Сменить пароль</string>
 </resources>

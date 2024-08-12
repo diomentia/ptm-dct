@@ -1,8 +1,14 @@
 package space.diomentia.ptm_dct.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -15,11 +21,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import space.diomentia.ptm_dct.ui.theme.blue_robins_egg
 
 @Composable
 private fun getWindowSize(): Size {
@@ -108,5 +116,38 @@ fun DownArrowContainer(
         CompositionLocalProvider(LocalContentColor provides contentColor) {
             content()
         }
+    }
+}
+
+@Composable
+fun BorderedDialogContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val borderColor: Color = MaterialTheme.colorScheme.primary
+    val containerColor: Color = MaterialTheme.colorScheme.background
+    val contentColor: Color = blue_robins_egg
+    Surface(
+        modifier = Modifier
+            .drawWithCache {
+                val borderShape = Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(0f, size.height / 2f)
+                    lineTo(size.width, size.height / 5f)
+                    lineTo(size.width, 0f)
+                }
+                onDrawBehind {
+                    drawPath(borderShape, borderColor)
+                }
+            }
+            .fillMaxWidth(.95f)
+            .padding(24.dp)
+            .defaultMinSize(minHeight = 200.dp)
+            .then(modifier),
+        shape = RectangleShape,
+        color = containerColor,
+        contentColor = contentColor
+    ) {
+        content()
     }
 }

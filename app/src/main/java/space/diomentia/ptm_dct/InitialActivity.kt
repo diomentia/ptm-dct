@@ -1,6 +1,7 @@
 package space.diomentia.ptm_dct
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -26,7 +27,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -97,6 +100,22 @@ class InitialActivity : ComponentActivity() {
                                         resources.getString(R.string.app_name),
                                         style = MaterialTheme.typography.titleLarge
                                     )
+                                },
+                                actions = {
+                                    IconButton(
+                                        onClick = {
+                                            val intent = Intent(
+                                                this@InitialActivity,
+                                                SettingsActivity::class.java
+                                            )
+                                            this@InitialActivity.startActivity(intent)
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Settings,
+                                            contentDescription = stringResource(R.string.settings)
+                                        )
+                                    }
                                 }
                             )
                         },
