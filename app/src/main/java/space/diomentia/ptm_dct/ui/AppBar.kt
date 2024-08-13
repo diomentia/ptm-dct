@@ -89,8 +89,7 @@ fun PtmTopBar(
                 Box(
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.statusBars)
-                        .clipToBounds()
-                        .padding(8.dp)
+                        .padding(12.dp)
                 ) {
                     actions()
                 }

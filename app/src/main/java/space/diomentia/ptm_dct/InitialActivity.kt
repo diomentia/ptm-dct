@@ -112,6 +112,9 @@ class InitialActivity : ComponentActivity() {
                                     ) {
                                         Icon(
                                             Icons.Default.Settings,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(4.dp),
                                             contentDescription = stringResource(R.string.settings)
                                         )
                                     }
