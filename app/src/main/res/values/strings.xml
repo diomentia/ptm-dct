@@ -20,4 +20,5 @@
     <string name="change_password">Сменить пароль</string>
     <string name="access_denied">Недостаточный уровень доступа</string>
     <string name="password_changed">Пароль сменён на \"%s\"</string>
+    <string name="back">Назад</string>
 </resources>

@@ -64,15 +64,15 @@ fun PtmTopBar(
         ) {
             Row(
                 horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.statusBars)
-                    .clipToBounds()
-                    .padding(16.dp)
+                    .padding(12.dp)
             ) {
-                Box(Modifier.padding(horizontal = 8.dp)) {
+                Box {
                     navigation()
                 }
-                Box(Modifier.padding(horizontal = 8.dp)) {
+                Box(Modifier.padding(horizontal = 4.dp)) {
                     ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                         title()
                     }
