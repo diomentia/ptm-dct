@@ -16,3 +16,9 @@ object Session {
         get() = if (userPassword == "0000") AccessLevel.Admin else AccessLevel.Guest
     var rfidTag by mutableStateOf<RfidController.RfidTag?>(null)
 }
+
+enum class Step {
+    Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
+
+    fun next(): Step = entries[this.ordinal + 1]
+}

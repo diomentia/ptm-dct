@@ -12,24 +12,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-
-@Composable
-private fun getWindowSize(): Size {
-    return LocalConfiguration.current.let {
-        Size(
-            with(LocalDensity.current) { it.screenWidthDp.dp.toPx() },
-            with(LocalDensity.current) { it.screenHeightDp.dp.toPx() }
-        )
-    }
-}
 
 @Composable
 fun SideArrowContainer(

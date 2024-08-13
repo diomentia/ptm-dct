@@ -3,18 +3,15 @@ package space.diomentia.ptm_dct
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,14 +26,11 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,8 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,31 +48,23 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.LocalStep
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
+import space.diomentia.ptm_dct.data.Step
 import space.diomentia.ptm_dct.ui.PtmOutlinedButton
+import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
+import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
-import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
-
-private enum class Step {
-    Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
-
-    fun next(): Step = entries[this.ordinal + 1]
-}
-
-private val LocalStep = compositionLocalOf { mutableStateOf(Step.Password) }
 
 class InitialActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(blue_zodiac.copy(alpha = .25f).toArgb()),
-            navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
-        )
+        setupEdgeToEdge(activity = this)
         setContent {
             PtmDctTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
@@ -90,32 +74,16 @@ class InitialActivity : ComponentActivity() {
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        topBar = {
-                            PtmTopBar(
-                                title = {
-                                    Text(
-                                        resources.getString(R.string.app_name),
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                }
-                            )
-                        },
-                        snackbarHost = { SnackbarHost(snackbarHostState) {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            Snackbar(
-                                it,
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.clickable(
-                                    interactionSource = interactionSource,
-                                    indication = null
-                                ) {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                }
-                            )
-                        } }
+                        topBar = { PtmTopBar(
+                            title = {
+                                Text(stringResource(R.string.app_name))
+                            }
+                        ) },
+                        snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Contents(Modifier.padding(innerPadding))
+                        Box(Modifier.padding(innerPadding)) {
+                            Contents()
+                        }
                     }
                 }
             }

@@ -14,4 +14,5 @@
     <string name="cancel">Отмена</string>
     <string name="accept_tag">Взять метку</string>
     <string name="wrong_password">Введён неверный пароль</string>
+    <string name="connected">Подключение установлено</string>
 </resources>
