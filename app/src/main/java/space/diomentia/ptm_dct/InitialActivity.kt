@@ -1,6 +1,7 @@
 package space.diomentia.ptm_dct
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,11 +20,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -49,6 +54,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
+import space.diomentia.ptm_dct.data.LocalStep
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Step
@@ -56,6 +62,7 @@ import space.diomentia.ptm_dct.ui.PtmOutlinedButton
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
+import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
@@ -65,9 +72,9 @@ class InitialActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(activity = this)
+        val snackbarHostState = SnackbarHostState()
         setContent {
             PtmDctTheme {
-                val snackbarHostState = remember { SnackbarHostState() }
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
                     LocalStep provides remember { mutableStateOf(Step.Password) }
@@ -76,7 +83,26 @@ class InitialActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         topBar = { PtmTopBar(
                             title = {
-                                Text(stringResource(R.string.app_name))
+                                Text(resources.getString(R.string.app_name))
+                            },
+                            actions = {
+                                IconButton(
+                                    onClick = {
+                                        val intent = Intent(
+                                            this@InitialActivity,
+                                            SettingsActivity::class.java
+                                        )
+                                        this@InitialActivity.startActivity(intent)
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Settings,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(6.dp),
+                                        contentDescription = stringResource(R.string.settings)
+                                    )
+                                }
                             }
                         ) },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
@@ -98,12 +124,13 @@ fun Contents(
     var currentStep by LocalStep.current
     Column(
         modifier = Modifier
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 24.dp)
             .then(modifier),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SideArrowContainer(
+            modifier = Modifier.weight(1f),
             toRight = false,
             slantFactor = 4
         ) {
@@ -112,18 +139,17 @@ fun Contents(
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
                     .padding(24.dp)
-                    .fillMaxWidth()
-                    .heightIn(min = 75.dp, max = 175.dp)
+                    .widthIn(min = 64.dp, max = 150.dp)
                     .fillMaxSize()
             )
         }
         StepHelper(
             Modifier
+                .weight(1f)
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         )
         // TODO: segmented button USB/Bluetooth
-        Spacer(Modifier.weight(1f))
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -216,7 +242,7 @@ private fun StepHelper(
                 label = hint.hintResource.toString()
             )
             val fontSize = animateIntAsState(
-                if (hint.isMain && stepState == 0) 20 else 14,
+                if (hint.isMain && stepState == 0) 16 else 14,
                 label = hint.hintResource.toString()
             )
             AnimatedVisibility(
@@ -292,7 +318,7 @@ private fun StartScanButton(
             Icons.Default.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
             modifier = Modifier
-                .size(64.dp)
+                .requiredSize(64.dp)
         )
     }
 }
@@ -339,7 +365,7 @@ private fun BluetoothPairingButton(
             Icons.Default.Bluetooth,
             contentDescription = stringResource(R.string.button_bluetooth_pairing),
             modifier = Modifier
-                .size(64.dp)
+                .requiredSize(64.dp)
         )
     }
 }

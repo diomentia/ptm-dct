@@ -7,13 +7,18 @@ import androidx.compose.runtime.setValue
 object Session {
     enum class AccessLevel(val code: String) {
         Guest("guest"),
-        Admin("admin")
+        Admin("admin");
+        companion object {
+            fun checkPasswordLevel(password: String): AccessLevel = when (PasswordHash.encrypt(password)) {
+                ApplicationSettings.passwordAdmin -> Admin
+                else -> Guest
+            }
+        }
     }
 
     var userPassword by mutableStateOf("")
     val userLevel: AccessLevel
-        // TODO! better password system
-        get() = if (userPassword == "0000") AccessLevel.Admin else AccessLevel.Guest
+        get() = AccessLevel.checkPasswordLevel(userPassword)
     var rfidTag by mutableStateOf<RfidController.RfidTag?>(null)
 }
 
