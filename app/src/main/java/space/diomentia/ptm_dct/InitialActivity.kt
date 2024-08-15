@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Nfc
@@ -114,7 +116,7 @@ class InitialActivity : ComponentActivity() {
                                             Icons.Default.Settings,
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .padding(4.dp),
+                                                .padding(6.dp),
                                             contentDescription = stringResource(R.string.settings)
                                         )
                                     }
@@ -157,6 +159,7 @@ fun Contents(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SideArrowContainer(
+            modifier = Modifier.weight(1f),
             toRight = false,
             slantFactor = 4
         ) {
@@ -165,18 +168,17 @@ fun Contents(
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
                     .padding(24.dp)
-                    .fillMaxWidth()
-                    .heightIn(min = 75.dp, max = 175.dp)
+                    .widthIn(min = 64.dp, max = 150.dp)
                     .fillMaxSize()
             )
         }
         StepHelper(
             Modifier
+                .weight(1f)
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         )
         // TODO: segmented button USB/Bluetooth
-        Spacer(Modifier.weight(1f))
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -345,7 +347,7 @@ private fun StartScanButton(
             Icons.Default.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
             modifier = Modifier
-                .size(64.dp)
+                .requiredSize(64.dp)
         )
     }
 }
@@ -392,7 +394,7 @@ private fun BluetoothPairingButton(
             Icons.Default.Bluetooth,
             contentDescription = stringResource(R.string.button_bluetooth_pairing),
             modifier = Modifier
-                .size(64.dp)
+                .requiredSize(64.dp)
         )
     }
 }
