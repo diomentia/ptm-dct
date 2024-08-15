@@ -1,10 +1,18 @@
 package space.diomentia.ptm_dct
 
+import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -15,13 +23,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
@@ -50,10 +55,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
-import space.diomentia.ptm_dct.data.LocalStep
 import space.diomentia.ptm_dct.data.LocalStep
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
@@ -62,7 +68,6 @@ import space.diomentia.ptm_dct.ui.PtmOutlinedButton
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
-import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
@@ -130,7 +135,9 @@ fun Contents(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         SideArrowContainer(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 8.dp),
             toRight = false,
             slantFactor = 4
         ) {
@@ -138,7 +145,7 @@ fun Contents(
                 painter = painterResource(R.drawable.logo_ptm),
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(16.dp)
                     .widthIn(min = 64.dp, max = 150.dp)
                     .fillMaxSize()
             )
@@ -147,7 +154,7 @@ fun Contents(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(vertical = 8.dp)
         )
         // TODO: segmented button USB/Bluetooth
         TextField(
@@ -177,11 +184,11 @@ fun Contents(
         }
         Row(
             modifier = Modifier
-                .padding(vertical = 16.dp)
+                .padding(vertical = 8.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StartScanButton()
+            ScanRfidButton()
             BluetoothPairingButton()
         }
     }
@@ -265,7 +272,7 @@ private fun StepHelper(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun StartScanButton(
+private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
@@ -323,19 +330,45 @@ private fun StartScanButton(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class)
 @Composable
 private fun BluetoothPairingButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    // TODO
-    if (currentStep == Step.BluetoothTurnOn && false) {
+    val btAdapter: BluetoothAdapter = LocalContext.current.getSystemService(BluetoothManager::class.java).adapter
+    var bluetoothEnabled by remember { mutableStateOf(btAdapter.isEnabled) }
+    LocalContext.current.registerReceiver(
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                bluetoothEnabled = (intent
+                    ?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)
+                    ?: BluetoothAdapter.STATE_OFF) == BluetoothAdapter.STATE_ON
+            }
+        },
+        IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+    )
+    if (currentStep > Step.BluetoothTurnOn && !bluetoothEnabled) {
+        currentStep = Step.BluetoothTurnOn
+    } else if (currentStep == Step.BluetoothTurnOn && bluetoothEnabled) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
     enabled = currentStep >= Step.BluetoothPair
     val context = LocalContext.current
+    val launcherForResult = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {}
+    val btPermissionsState = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
+        rememberMultiplePermissionsState(listOf(
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_SCAN
+        ))
+    } else {
+        rememberMultiplePermissionsState(listOf(
+            Manifest.permission.BLUETOOTH
+        ))
+    }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
     PtmOutlinedButton(
@@ -355,7 +388,11 @@ private fun BluetoothPairingButton(
                 }
             ) {
                 if (!enabled) {
-                    stepHint(currentStep, context, snackbarHostState, coroutineScope)
+                    if (!btPermissionsState.allPermissionsGranted) {
+                        btPermissionsState.launchMultiplePermissionRequest()
+                        return@combinedClickable
+                    }
+                    launcherForResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                     return@combinedClickable
                 }
             }

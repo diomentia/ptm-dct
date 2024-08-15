@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "space.diomentia.ptm_dct"
-        minSdk = 21
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "0.0"
@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.ui.tiles)
     implementation(libs.ui.tiles.extended)
     implementation(libs.androidx.preference.ktx)
+    implementation(libs.accompanist.permissions)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
