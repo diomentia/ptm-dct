@@ -69,7 +69,7 @@ import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.SideArrowContainer
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
-import space.diomentia.ptm_dct.ui.theme.PtmDctTheme
+import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
 import space.diomentia.ptm_dct.ui.theme.white
 
@@ -79,17 +79,15 @@ class InitialActivity : ComponentActivity() {
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {
-            PtmDctTheme {
-                CompositionLocalProvider(
-                    LocalSnackbarHostState provides snackbarHostState,
-                    LocalStep provides remember { mutableStateOf(Step.Password) }
-                ) {
+            CompositionLocalProvider(
+                LocalSnackbarHostState provides snackbarHostState,
+                LocalStep provides remember { mutableStateOf(Step.Password) }
+            ) {
+                PtmTheme {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = { PtmTopBar(
-                            title = {
-                                Text(resources.getString(R.string.app_name))
-                            },
+                            title = { Text(stringResource(R.string.app_name)) },
                             actions = {
                                 IconButton(
                                     onClick = {
@@ -123,7 +121,7 @@ class InitialActivity : ComponentActivity() {
 }
 
 @Composable
-fun Contents(
+private fun Contents(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
@@ -276,8 +274,11 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
+    /*
     if (currentStep == Step.RfidManager && RfidController.isAvailable ||
         currentStep == Step.RfidTag && Session.rfidTag != null) {
+    */
+    if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
@@ -336,18 +337,9 @@ private fun BluetoothPairingButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    val btAdapter: BluetoothAdapter = LocalContext.current.getSystemService(BluetoothManager::class.java).adapter
-    var bluetoothEnabled by remember { mutableStateOf(btAdapter.isEnabled) }
-    LocalContext.current.registerReceiver(
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                bluetoothEnabled = (intent
-                    ?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)
-                    ?: BluetoothAdapter.STATE_OFF) == BluetoothAdapter.STATE_ON
-            }
-        },
-        IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
-    )
+    val btAdapter: BluetoothAdapter? = getBtAdapter()
+    var bluetoothEnabled by remember { mutableStateOf(false) }
+    listenBtState { bluetoothEnabled = it }
     if (currentStep > Step.BluetoothTurnOn && !bluetoothEnabled) {
         currentStep = Step.BluetoothTurnOn
     } else if (currentStep == Step.BluetoothTurnOn && bluetoothEnabled) {
@@ -359,16 +351,7 @@ private fun BluetoothPairingButton(
     val launcherForResult = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {}
-    val btPermissionsState = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
-        rememberMultiplePermissionsState(listOf(
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN
-        ))
-    } else {
-        rememberMultiplePermissionsState(listOf(
-            Manifest.permission.BLUETOOTH
-        ))
-    }
+    val btPermissionsState = getBtPermissionsState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
     PtmOutlinedButton(
@@ -395,6 +378,7 @@ private fun BluetoothPairingButton(
                     launcherForResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                     return@combinedClickable
                 }
+                // context.startActivity(Intent(context, PairingActivity::class.java))
             }
             .then(modifier)
     ) {
@@ -410,7 +394,7 @@ private fun BluetoothPairingButton(
 @Preview(showBackground = true)
 @Composable
 fun InitialPreview() {
-    PtmDctTheme {
+    PtmTheme {
         Contents()
     }
 }
