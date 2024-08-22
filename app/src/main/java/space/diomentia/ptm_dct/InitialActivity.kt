@@ -1,14 +1,14 @@
 package space.diomentia.ptm_dct
 
-import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.BroadcastReceiver
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -55,13 +55,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import androidx.core.content.IntentCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Step
 import space.diomentia.ptm_dct.ui.PtmOutlinedButton
@@ -331,15 +329,15 @@ private fun ScanRfidButton(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class)
+@SuppressLint("MissingPermission")
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BluetoothPairingButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    val btAdapter: BluetoothAdapter? = getBtAdapter()
     var bluetoothEnabled by remember { mutableStateOf(false) }
-    listenBtState { bluetoothEnabled = it }
+    ListenBtState { bluetoothEnabled = it }
     if (currentStep > Step.BluetoothTurnOn && !bluetoothEnabled) {
         currentStep = Step.BluetoothTurnOn
     } else if (currentStep == Step.BluetoothTurnOn && bluetoothEnabled) {
@@ -348,12 +346,29 @@ private fun BluetoothPairingButton(
     var enabled by remember { mutableStateOf(false) }
     enabled = currentStep >= Step.BluetoothPair
     val context = LocalContext.current
-    val launcherForResult = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {}
-    val btPermissionsState = getBtPermissionsState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
+    val btPermissionsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        bluetoothEnabled = getBtAdapter(context)?.isEnabled ?: false
+    }
+    val btEnableLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {}
+    val btConnectLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != Activity.RESULT_OK || result.data == null) {
+            return@rememberLauncherForActivityResult
+        }
+        IntentCompat.getParcelableExtra(result.data!!, PairingActivity.EXTRA_CONNECTED_DEVICE, BluetoothDevice::class.java)?.let { device ->
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar("Connected to: ${device.name}")
+            }
+        }
+    }
     PtmOutlinedButton(
         roundedCorners = true,
         enabled = enabled,
@@ -371,14 +386,14 @@ private fun BluetoothPairingButton(
                 }
             ) {
                 if (!enabled) {
-                    if (!btPermissionsState.allPermissionsGranted) {
-                        btPermissionsState.launchMultiplePermissionRequest()
+                    if (!checkBtPermissions(context)) {
+                        btPermissionsLauncher.launch(btPermissions.toTypedArray())
                         return@combinedClickable
                     }
-                    launcherForResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                    btEnableLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                     return@combinedClickable
                 }
-                // context.startActivity(Intent(context, PairingActivity::class.java))
+                btConnectLauncher.launch(Intent(context, PairingActivity::class.java))
             }
             .then(modifier)
     ) {

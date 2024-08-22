@@ -7,55 +7,73 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.MultiplePermissionsState
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import androidx.core.app.ActivityCompat
 
-@Composable
-fun getBtAdapter(): BluetoothAdapter? = LocalContext.current
-    .getSystemService(BluetoothManager::class.java)
-    .adapter
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun getBtPermissionsState(): MultiplePermissionsState = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
-    rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN
-        )
+val btPermissions = when (Build.VERSION.SDK_INT) {
+    in Build.VERSION_CODES.S..Int.MAX_VALUE -> listOf(
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH_SCAN
     )
-} else {
-    rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.BLUETOOTH
-        )
+    in Build.VERSION_CODES.Q until Build.VERSION_CODES.S -> listOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    )
+    else -> listOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION
     )
 }
 
+fun checkBtPermissions(context: Context): Boolean {
+    btPermissions.forEach {
+        if (ActivityCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED) {
+            return false
+        }
+    }
+    return true
+}
+
+fun getBtAdapter(context: Context): BluetoothAdapter? {
+    if (!checkBtPermissions(context)) return null
+    return context.getSystemService(BluetoothManager::class.java).adapter
+}
+
 @Composable
-fun listenBtState(
+fun ListenBtState(
     updater: (Boolean) -> Unit
 ) {
-    val btAdapter = getBtAdapter()
-    LaunchedEffect(Unit) {
-        updater(btAdapter?.state == BluetoothAdapter.STATE_ON)
-    }
-    LocalContext.current.registerReceiver(
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                updater(
-                    (intent
-                        ?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)
-                        ?: BluetoothAdapter.STATE_OFF) == BluetoothAdapter.STATE_ON
+    val context = LocalContext.current
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                BluetoothAdapter.ACTION_STATE_CHANGED -> updater(
+                    (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF))
+                        == BluetoothAdapter.STATE_ON
                 )
             }
-        },
-        IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
-    )
+        }
+    }
+    val btAdapter = getBtAdapter(LocalContext.current)
+    LaunchedEffect(Unit) {
+        updater(btAdapter?.state == BluetoothAdapter.STATE_ON)
+        context.registerReceiver(
+            receiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            context.unregisterReceiver(receiver)
+        }
+    }
 }

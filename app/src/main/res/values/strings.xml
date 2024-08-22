@@ -22,4 +22,9 @@
     <string name="access_denied">Недостаточный уровень доступа</string>
     <string name="password_changed">Пароль сменён на \"%s\"</string>
     <string name="back">Назад</string>
+    <string name="choose_kip">Выберете КИП</string>
+    <string name="known_devices">Известные устройства</string>
+    <string name="found_devices">Найденные устройства</string>
+    <string name="start_search">Начать поиск</string>
+    <string name="refresh">Обновить</string>
 </resources>

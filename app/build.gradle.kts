@@ -66,7 +66,6 @@ dependencies {
     implementation(libs.ui.tiles)
     implementation(libs.ui.tiles.extended)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.accompanist.permissions)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
