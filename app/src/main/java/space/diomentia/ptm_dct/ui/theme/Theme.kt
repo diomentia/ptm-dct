@@ -19,7 +19,7 @@ private val PtmColorScheme = darkColorScheme(
 )
 
 @Composable
-fun PtmDctTheme(
+fun PtmTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = PtmColorScheme
