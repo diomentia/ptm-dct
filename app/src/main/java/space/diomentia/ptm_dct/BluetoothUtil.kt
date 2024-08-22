@@ -55,9 +55,10 @@ fun ListenBtState(
 ) {
     val context = LocalContext.current
     val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
             when (intent?.action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> updater(
+                    checkBtPermissions(context) &&
                     (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF))
                         == BluetoothAdapter.STATE_ON
                 )
