@@ -60,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
+import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Step
 import space.diomentia.ptm_dct.ui.PtmOutlinedButton
@@ -272,11 +273,8 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    /*
     if (currentStep == Step.RfidManager && RfidController.isAvailable ||
         currentStep == Step.RfidTag && Session.rfidTag != null) {
-    */
-    if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
