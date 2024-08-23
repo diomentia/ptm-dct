@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -138,8 +139,10 @@ fun ChangePasswordDialog(
 ) {
     var adminPassword by remember { mutableStateOf("") }
     val onConfirmation = {
-        ApplicationSettings.passwordAdmin = PasswordHash.encrypt(adminPassword)
-        onDismissRequest()
+        PasswordHash.encrypt(adminPassword)?.let {
+            ApplicationSettings.passwordAdmin = it
+            onDismissRequest()
+        } ?: Unit
     }
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
@@ -160,6 +163,7 @@ fun ChangePasswordDialog(
                         style = textStyle
                     )
                     TextField(
+                        singleLine = true,
                         placeholder = {
                             Text(
                                 stringResource(R.string.password),
@@ -183,7 +187,10 @@ fun ChangePasswordDialog(
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
-                    TextButton(onClick = onConfirmation) {
+                    TextButton(
+                        enabled = PasswordHash.checkPassword(adminPassword),
+                        onClick = onConfirmation
+                    ) {
                         Text(
                             stringResource(R.string.confirm),
                             style = MaterialTheme.typography.labelSmall

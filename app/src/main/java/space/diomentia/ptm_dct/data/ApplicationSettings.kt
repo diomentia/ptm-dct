@@ -8,7 +8,12 @@ import java.security.MessageDigest
 
 class PasswordHash(val hash: String) {
     companion object {
-        fun encrypt(password: String): PasswordHash {
+        fun checkPassword(password: String): Boolean = Regex(
+            "^[\\w!@#\$%^&*()\\-=+/,.\"';:?`~\\[\\]{}]+\$"
+        ).matches(password)
+
+        fun encrypt(password: String): PasswordHash? {
+            if (!checkPassword(password)) return null
             val md = MessageDigest.getInstance("SHA-512")
             val digest = md.digest(password.toByteArray())
             val sb = StringBuilder()
@@ -58,7 +63,7 @@ object ApplicationSettings {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         if (sharedPreferences.getString(keyPasswordAdmin, "") == "") {
             with(sharedPreferences.edit()) {
-                putString(keyPasswordAdmin, PasswordHash.encrypt("0000").hash)
+                putString(keyPasswordAdmin, PasswordHash.encrypt("0000")!!.hash)
                 apply()
             }
         }

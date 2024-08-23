@@ -155,6 +155,7 @@ private fun Contents(
         )
         // TODO: segmented button USB/Bluetooth
         TextField(
+            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
