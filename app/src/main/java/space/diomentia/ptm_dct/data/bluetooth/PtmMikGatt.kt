@@ -3,30 +3,32 @@ package space.diomentia.ptm_dct.data.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import com.beepiz.bluetooth.gattcoroutines.GattConnection
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
+import space.diomentia.ptm_dct.cancelWithQueue
+import space.diomentia.ptm_dct.queueJob
+import space.diomentia.ptm_dct.runQueue
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
 
 @Suppress("DEPRECATION")
 @SuppressLint("MissingPermission")
-@OptIn(
-    ExperimentalBleGattCoroutinesCoroutinesApi::class,
-    ExperimentalCoroutinesApi::class,
-    DelicateCoroutinesApi::class
-)
+@OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class)
 class PtmMikGatt(private val device: BluetoothDevice) {
     companion object {
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
@@ -35,39 +37,56 @@ class PtmMikGatt(private val device: BluetoothDevice) {
         val CHAR_VOLTAGE: UUID = UUID.fromString("00002b18-0000-1000-8000-00805f9b34fb")
     }
 
-    // TODO IMPORTANT rewrite to use IO coroutines, not a thread
-    private val mThread = newSingleThreadContext("GattThread")
-    private val mCoroutineScope = CoroutineScope(mThread)
+    private val mJobQueue = Channel<Job>(
+        capacity = 32,
+        onBufferOverflow = BufferOverflow.DROP_LATEST
+    )
+    private val mCoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    private var mGatt: GattConnection = GattConnection(device)
+    private var mGatt: GattConnection = GattConnection(
+        device,
+        connectionSettings = GattConnection.ConnectionSettings(autoConnect = true)
+    )
 
+    var isConnected by mutableStateOf(mGatt.isConnected)
+        private set
     var batteryLevel by mutableIntStateOf(0)
         private set
     var voltage by mutableFloatStateOf(0.0f)
         private set
 
     init {
-        connect()
+        mCoroutineScope.launch {
+            while (true) {
+                if (isConnected != mGatt.isConnected) {
+                    isConnected = mGatt.isConnected
+                }
+                delay(5000L)
+            }
+        }
+        mCoroutineScope.runQueue(mJobQueue)
     }
 
-    val isConnected
-        get() = mGatt.isConnected
     fun connect() {
-        if (!mGatt.isConnected) {
-            mCoroutineScope.launch {
-                runBlocking {
-                    mGatt.apply {
-                        this.connect()
-                        discoverServices()
-                    }
-                }
+        mCoroutineScope.queueJob(mJobQueue) {
+            if (!mGatt.isConnected) {
+                mGatt.connect()
+                mGatt.discoverServices()
+                isConnected = true
+            }
+        }
+    }
+    fun disconnect() {
+        mCoroutineScope.queueJob(mJobQueue) {
+            if (mGatt.isConnected) {
+                mGatt.disconnect()
+                isConnected = false
             }
         }
     }
     fun cancel() {
         mGatt.close()
-        mCoroutineScope.cancel()
-        mThread.close()
+        mCoroutineScope.cancelWithQueue(mJobQueue)
     }
 
     private fun characteristicCallback(
@@ -92,19 +111,21 @@ class PtmMikGatt(private val device: BluetoothDevice) {
     }
 
     private fun readCharacteristic(service: UUID, characteristic: UUID) {
-        mCoroutineScope.launch {
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@launch
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mCoroutineScope.queueJob(mJobQueue) {
             mGatt.readCharacteristic(char)
             characteristicCallback(char, char.value)
         }
     }
 
     private fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
-        mCoroutineScope.launch {
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@launch
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mCoroutineScope.queueJob(mJobQueue) {
             mGatt.readCharacteristic(char)
             characteristicCallback(char, char.value)
             mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, true)
+        }
+        mCoroutineScope.launch {
             mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
         }
     }
@@ -118,6 +139,6 @@ class PtmMikGatt(private val device: BluetoothDevice) {
     fun updateVoltage() = readCharacteristic(SERVICE_MEASUREMENT, CHAR_VOLTAGE)
     fun listenVoltage(enable: Boolean = true) {
         updateVoltage()
-        return toggleNotifications(SERVICE_MEASUREMENT, CHAR_VOLTAGE, enable)
+        toggleNotifications(SERVICE_MEASUREMENT, CHAR_VOLTAGE, enable)
     }
 }

@@ -93,10 +93,18 @@ class MeasurementsActivity : ComponentActivity() {
         if (mGattConnection == null && mDevice != null) {
             mGattConnection = PtmMikGatt(mDevice!!)
         }
+        if (mGattConnection?.isConnected == false) {
+            mGattConnection?.connect()
+        }
     }
 
     override fun onStop() {
         super.onStop()
+        finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         mGattConnection?.cancel()
         mGattConnection = null
     }
