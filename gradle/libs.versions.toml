@@ -14,6 +14,8 @@ uiTiles = "2.4.0"
 uiTilesExtended = "2.4.0"
 preferenceKtx = "1.2.1"
 accompanistPermissions = "0.35.1-alpha"
+blegattcoroutinesCore = "0.5.0"
+blegattcoroutinesGenericaccess = "0.5.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +38,8 @@ ui-tiles = { group = "com.github.alorma.compose-settings", name = "ui-tiles", ve
 ui-tiles-extended = { group = "com.github.alorma.compose-settings", name = "ui-tiles-extended", version.ref = "uiTilesExtended" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
+blegattcoroutines-core = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-core", version.ref = "blegattcoroutinesCore" }
+blegattcoroutines-genericaccess = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-genericaccess", version.ref = "blegattcoroutinesGenericaccess" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

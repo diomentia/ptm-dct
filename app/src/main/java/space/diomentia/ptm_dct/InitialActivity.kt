@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -63,6 +61,10 @@ import space.diomentia.ptm_dct.data.LocalStep
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Step
+import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
+import space.diomentia.ptm_dct.data.bluetooth.btPermissions
+import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
+import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmOutlinedButton
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
@@ -109,7 +111,10 @@ class InitialActivity : ComponentActivity() {
                         ) },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Box(Modifier.padding(innerPadding)) {
+                        Box(Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                        ) {
                             Contents()
                         }
                     }
@@ -362,10 +367,9 @@ private fun BluetoothPairingButton(
             return@rememberLauncherForActivityResult
         }
         IntentCompat.getParcelableExtra(result.data!!, PairingActivity.EXTRA_CONNECTED_DEVICE, BluetoothDevice::class.java)?.let { device ->
-            coroutineScope.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar("Connected to: ${device.name}")
-            }
+            Intent(context, MeasurementsActivity::class.java)
+                .putExtra(PairingActivity.EXTRA_CONNECTED_DEVICE, device)
+                .let { context.startActivity(it) }
         }
     }
     PtmOutlinedButton(

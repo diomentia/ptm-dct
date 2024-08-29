@@ -1,4 +1,4 @@
-package space.diomentia.ptm_dct
+package space.diomentia.ptm_dct.data.bluetooth
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter

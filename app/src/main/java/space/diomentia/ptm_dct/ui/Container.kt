@@ -74,12 +74,12 @@ fun DownArrowContainer(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    slantFactor: Int = 10,
+    slantFactor: Int = 8,
     content: @Composable () -> Unit
 ) {
     val screenSize = getWindowSize()
     var absCoordinates by remember { mutableStateOf(Offset.Zero) }
-    val offset = screenSize.height / slantFactor
+    val offset = screenSize.height / slantFactor / 3 * 2
     Box(Modifier
         .onGloballyPositioned { coordinates ->
             absCoordinates = coordinates.positionInWindow()
@@ -87,9 +87,9 @@ fun DownArrowContainer(
         .drawWithCache {
             val downArrow = Path().apply {
                 moveTo(-absCoordinates.x, -absCoordinates.y)
-                lineTo(-absCoordinates.x, size.height - offset / 2)
-                lineTo(screenSize.width / 2f - absCoordinates.x, size.height + offset / 2)
-                lineTo(screenSize.width - absCoordinates.x, size.height - offset / 2)
+                lineTo(-absCoordinates.x, size.height)
+                lineTo(screenSize.width / 2f - absCoordinates.x, size.height + offset)
+                lineTo(screenSize.width - absCoordinates.x, size.height)
                 lineTo(screenSize.width - absCoordinates.x, -absCoordinates.y)
             }
             onDrawBehind {

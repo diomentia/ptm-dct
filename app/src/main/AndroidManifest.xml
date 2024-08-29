@@ -48,6 +48,7 @@
         </activity>
         <activity android:name=".SettingsActivity" />
         <activity android:name="space.diomentia.ptm_dct.PairingActivity" />
+        <activity android:name=".MeasurementsActivity" />
     </application>
 
 </manifest>

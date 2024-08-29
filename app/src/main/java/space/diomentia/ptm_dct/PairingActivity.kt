@@ -51,19 +51,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
+import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
+import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import java.io.IOException
 
-private var mBtAdapter: BluetoothAdapter? = null
 private var mIsDiscovering by mutableStateOf(false)
 private val mFoundDevices = mutableStateMapOf<String, BluetoothDevice>()
 private val mBondedDevices = mutableStateListOf<BluetoothDevice>()
 
 class PairingActivity : ComponentActivity() {
+    var mBtAdapter: BluetoothAdapter? = null
+
     companion object {
         const val EXTRA_CONNECTED_DEVICE = "connected_device"
     }
@@ -88,7 +92,7 @@ class PairingActivity : ComponentActivity() {
                         intent,
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
-                    )?.let { mFoundDevices[it.name] = it }
+                    )?.let { mFoundDevices[it.address] = it }
                 }
                 BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
                     mBondedDevices.apply {
@@ -120,7 +124,8 @@ class PairingActivity : ComponentActivity() {
         val snackbarHostState = SnackbarHostState()
         setContent {
             CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState
+                LocalSnackbarHostState provides snackbarHostState,
+                LocalBtAdapter provides mBtAdapter
             ) {
                 PtmTheme {
                     Scaffold(
@@ -278,6 +283,7 @@ private fun ConnectableBtDevice(
                         ) {
                             super.onConnectionStateChange(gatt, status, newState)
                             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                                gatt?.disconnect()
                                 (context as? PairingActivity)?.finishWithResult(device)
                             }
                         }
@@ -293,14 +299,16 @@ private fun ConnectableBtDevice(
             .then(modifier)
     ) {
         Text(
-            device.name,
+            device.name ?: device.address,
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(Modifier.height(4.dp))
-        Text(
-            device.address,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(.5f)
-        )
+        if (device.name != null) {
+            Text(
+                device.address,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.alpha(.5f)
+            )
+        }
     }
 }
