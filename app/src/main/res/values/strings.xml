@@ -29,4 +29,6 @@
     <string name="start_search">Начать поиск</string>
     <string name="refresh">Обновить</string>
     <string name="current_charge">Текущий заряд</string>
+    <string name="hide_password">Скрыть пароль</string>
+    <string name="show_password">Показать пароль</string>
 </resources>

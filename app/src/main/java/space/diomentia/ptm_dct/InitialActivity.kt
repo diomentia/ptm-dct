@@ -26,10 +26,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,14 +54,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
+import space.diomentia.ptm_dct.data.PasswordHash
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Step
@@ -159,32 +168,7 @@ private fun Contents(
                 .padding(vertical = 8.dp)
         )
         // TODO: segmented button USB/Bluetooth
-        TextField(
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            placeholder = {
-                Text(
-                    stringResource(R.string.password),
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = white.copy(alpha = .25f)
-                    )
-                )
-            },
-            value = Session.userPassword,
-            onValueChange = { Session.userPassword = it }
-        )
-        if (Session.userPassword == "") {
-            currentStep = Step.Password
-        } else if (currentStep == Step.Password) {
-            currentStep = currentStep.next()
-        }
-        if (currentStep >= Step.UserLevel && Session.userLevel <= Session.AccessLevel.Guest) {
-            currentStep = Step.UserLevel
-        } else if (currentStep == Step.UserLevel) {
-            currentStep = currentStep.next()
-        }
+        PasswordField()
         Row(
             modifier = Modifier
                 .padding(vertical = 8.dp)
@@ -273,6 +257,54 @@ private fun StepHelper(
     }
 }
 
+@Composable
+private fun PasswordField(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var currentStep by LocalStep.current
+    var passwordVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(passwordVisible) {
+        if (passwordVisible) {
+            delay(2000)
+            passwordVisible = false
+        }
+    }
+    TextField(
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+            .then(modifier),
+        label = { Text(stringResource(R.string.password)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        leadingIcon = {
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = context.getString(
+                        if (passwordVisible) R.string.hide_password else R.string.show_password
+                    ),
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        },
+        value = Session.userPassword,
+        onValueChange = { Session.userPassword = it }
+    )
+    if (Session.userPassword == "") {
+        currentStep = Step.Password
+    } else if (currentStep == Step.Password) {
+        currentStep = currentStep.next()
+    }
+    if (currentStep >= Step.UserLevel && Session.userLevel <= Session.AccessLevel.Guest) {
+        currentStep = Step.UserLevel
+    } else if (currentStep == Step.UserLevel) {
+        currentStep = currentStep.next()
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ScanRfidButton(
@@ -281,6 +313,8 @@ private fun ScanRfidButton(
     var currentStep by LocalStep.current
     if (currentStep == Step.RfidManager && RfidController.isAvailable ||
         currentStep == Step.RfidTag && Session.rfidTag != null) {
+    // to test app without a device with RFID
+    // if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
