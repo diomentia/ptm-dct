@@ -5,6 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 object Session {
+    enum class Step {
+        Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
+
+        fun next(): Step = entries[this.ordinal + 1]
+    }
+
     enum class AccessLevel(val code: String) {
         Guest("guest"),
         Admin("admin");
@@ -16,14 +22,11 @@ object Session {
         }
     }
 
-    var userPassword by mutableStateOf("")
-    val userLevel: AccessLevel
-        get() = AccessLevel.checkPasswordLevel(userPassword)
+    fun updateUserLevel(password: String) {
+        userLevel = AccessLevel.checkPasswordLevel(password)
+    }
+
+    var userLevel by mutableStateOf(AccessLevel.Guest)
+        private set
     var rfidTag by mutableStateOf<RfidController.RfidTag?>(null)
-}
-
-enum class Step {
-    Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
-
-    fun next(): Step = entries[this.ordinal + 1]
 }

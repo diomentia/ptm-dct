@@ -8,6 +8,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikGatt
 
 val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
-val LocalStep = compositionLocalOf { mutableStateOf(Step.Password) }
+val LocalStep = compositionLocalOf { mutableStateOf(Session.Step.Password) }
 val LocalBtAdapter = staticCompositionLocalOf<BluetoothAdapter?> { null }
 val LocalGattConnection = staticCompositionLocalOf<PtmMikGatt?> { null }

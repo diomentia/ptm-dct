@@ -29,10 +29,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,10 +68,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.PasswordHash
 import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
-import space.diomentia.ptm_dct.data.Step
+import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
 import space.diomentia.ptm_dct.data.bluetooth.btPermissions
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
@@ -120,9 +121,10 @@ class InitialActivity : ComponentActivity() {
                         ) },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Box(Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
                         ) {
                             Contents()
                         }
@@ -266,37 +268,59 @@ private fun PasswordField(
     var passwordVisible by remember { mutableStateOf(false) }
     LaunchedEffect(passwordVisible) {
         if (passwordVisible) {
-            delay(2000)
+            delay(3000)
             passwordVisible = false
         }
     }
-    TextField(
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp)
-            .then(modifier),
-        label = { Text(stringResource(R.string.password)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        leadingIcon = {
-            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(
-                    if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = context.getString(
-                        if (passwordVisible) R.string.hide_password else R.string.show_password
-                    ),
-                    modifier = Modifier.padding(8.dp)
-                )
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        var passwordInput by remember { mutableStateOf("") }
+        TextField(
+            singleLine = true,
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 16.dp)
+                .then(modifier),
+            label = { Text(stringResource(R.string.password)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            leadingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = context.getString(
+                            if (passwordVisible) R.string.hide_password else R.string.show_password
+                        ),
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            },
+            value = passwordInput,
+            onValueChange = { passwordInput = it }
+        )
+        FilledIconButton(
+            modifier = Modifier
+                .padding(8.dp),
+            onClick = {
+                Session.updateUserLevel(passwordInput)
+                if (currentStep >= Step.Password) {
+                    if (passwordInput.isBlank()) {
+                        currentStep = Step.Password
+                    } else if (Session.userLevel == Session.AccessLevel.Guest) {
+                        currentStep = Step.UserLevel
+                    } else if (currentStep in arrayOf(Step.Password, Step.UserLevel)) {
+                        currentStep = currentStep.next()
+                    }
+                }
+                passwordInput = ""
             }
-        },
-        value = Session.userPassword,
-        onValueChange = { Session.userPassword = it }
-    )
-    if (Session.userPassword == "") {
-        currentStep = Step.Password
-    } else if (currentStep == Step.Password) {
-        currentStep = currentStep.next()
+        ) {
+            Icon(
+                Icons.Default.Done,
+                contentDescription = stringResource(R.string.apply)
+            )
+        }
     }
     if (currentStep >= Step.UserLevel && Session.userLevel <= Session.AccessLevel.Guest) {
         currentStep = Step.UserLevel

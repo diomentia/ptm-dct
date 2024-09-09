@@ -31,4 +31,5 @@
     <string name="current_charge">Текущий заряд</string>
     <string name="hide_password">Скрыть пароль</string>
     <string name="show_password">Показать пароль</string>
+    <string name="apply">Применить</string>
 </resources>
