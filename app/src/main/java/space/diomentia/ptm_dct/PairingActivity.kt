@@ -53,6 +53,7 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.bluetooth.PtmMikGatt
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
 import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -269,29 +270,12 @@ private fun ConnectableBtDevice(
         return
     }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = LocalSnackbarHostState.current
     Column(
         modifier = Modifier
             .clickable {
-                try {
-                    device.connectGatt(context, false, object : BluetoothGattCallback() {
-                        override fun onConnectionStateChange(
-                            gatt: BluetoothGatt?,
-                            status: Int,
-                            newState: Int
-                        ) {
-                            super.onConnectionStateChange(gatt, status, newState)
-                            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                                gatt?.disconnect()
-                                (context as? PairingActivity)?.finishWithResult(device)
-                            }
-                        }
-                    })?.connect()
-                } catch (ioe: IOException) {
-                    coroutineScope.launch {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                        snackbarHostState.showSnackbar("An error occurred: $ioe")
+                PtmMikGatt.checkIfAccessible(context, device) { isAccessible ->
+                    if (isAccessible) {
+                        (context as? PairingActivity)?.finishWithResult(device)
                     }
                 }
             }

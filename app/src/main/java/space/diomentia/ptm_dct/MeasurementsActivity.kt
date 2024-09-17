@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Battery0Bar
 import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
-import space.diomentia.ptm_dct.data.bluetooth.PtmMikGatt
+import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.ui.DownArrowContainer
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
@@ -44,7 +44,7 @@ import space.diomentia.ptm_dct.ui.theme.PtmTheme
 
 class MeasurementsActivity : ComponentActivity() {
     private var mDevice: BluetoothDevice? = null
-    private var mGattConnection by mutableStateOf<PtmMikGatt?>(null)
+    private var mGattConnection by mutableStateOf<PtmMikSerialPort?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +56,7 @@ class MeasurementsActivity : ComponentActivity() {
         if (mDevice == null) {
             finish()
         } else {
-            mGattConnection = PtmMikGatt(mDevice!!)
+            mGattConnection = PtmMikSerialPort(mDevice!!)
         }
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
@@ -91,7 +91,7 @@ class MeasurementsActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (mGattConnection == null && mDevice != null) {
-            mGattConnection = PtmMikGatt(mDevice!!)
+            mGattConnection = PtmMikSerialPort(mDevice!!)
         }
         if (mGattConnection?.isConnected == false) {
             mGattConnection?.connect()
@@ -113,9 +113,9 @@ class MeasurementsActivity : ComponentActivity() {
 @Composable
 private fun Contents() {
     val gatt = LocalGattConnection.current
-    if (gatt?.isConnected == true) {
-        gatt.listenVoltage()
-        gatt.listenBatteryLevel()
+    LaunchedEffect(Unit) {
+        gatt?.authenticate()
+        gatt?.fetchState()
     }
     Column(
         modifier = Modifier
@@ -124,32 +124,31 @@ private fun Contents() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         DownArrowContainer {
-            Surface(
-                shape = RoundedCornerShape(100),
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            Column {
+                Surface(
+                    shape = RoundedCornerShape(100),
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Icon(
-                        when (gatt?.batteryLevel) {
-                            in 75..100 -> Icons.Default.BatteryFull
-                            in 50 until 75 -> Icons.Default.Battery5Bar
-                            in 25 until 50 -> Icons.Default.Battery2Bar
-                            else -> Icons.Default.Battery0Bar
-                        },
-                        contentDescription = stringResource(R.string.current_charge)
-                    )
-                    Text("${gatt?.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
-                    Icon(
-                        Icons.Default.Bolt,
-                        contentDescription = stringResource(R.string.current_voltage)
-                    )
-                    Text("${gatt?.voltage}", style = MaterialTheme.typography.labelMedium)
+                    Row(
+                        modifier = Modifier
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            when (gatt?.batteryLevel) {
+                                in 75..100 -> Icons.Default.BatteryFull
+                                in 50 until 75 -> Icons.Default.Battery5Bar
+                                in 25 until 50 -> Icons.Default.Battery2Bar
+                                else -> Icons.Default.Battery0Bar
+                            },
+                            contentDescription = stringResource(R.string.current_charge)
+                        )
+                        Text("${gatt?.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
+                    }
                 }
+                Text("Auth: ${gatt?.authInfo}")
+                Text("Status: ${gatt?.stateInfo}")
             }
         }
     }
