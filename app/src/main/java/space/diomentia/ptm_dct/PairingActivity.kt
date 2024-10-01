@@ -53,7 +53,9 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.bluetooth.PtmGattInterface
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikGatt
+import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
 import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -273,7 +275,7 @@ private fun ConnectableBtDevice(
     Column(
         modifier = Modifier
             .clickable {
-                PtmMikGatt.checkIfAccessible(context, device) { isAccessible ->
+                PtmGattInterface.checkIfAccessible(context, device) { isAccessible ->
                     if (isAccessible) {
                         (context as? PairingActivity)?.finishWithResult(device)
                     }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
+import kotlin.math.max
 
 class PtmMikGatt(private val device: BluetoothDevice) : PtmGattInterface(device) {
     companion object {
@@ -27,7 +28,9 @@ class PtmMikGatt(private val device: BluetoothDevice) : PtmGattInterface(device)
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray
     ) {
-        val buffer = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN).put(value)
+        val buffer = ByteBuffer
+            .wrap(value.copyInto(ByteArray(max(64, value.size))))
+            .order(ByteOrder.LITTLE_ENDIAN)
         when (characteristic.service.uuid) {
             SERVICE_BATTERY -> {
                 when (characteristic.uuid) {

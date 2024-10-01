@@ -19,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.cancelWithQueue
 import space.diomentia.ptm_dct.queueJob
@@ -75,13 +76,13 @@ abstract class PtmGattInterface(private val device: BluetoothDevice) {
                 if (isConnected != mGatt.isConnected) {
                     isConnected = mGatt.isConnected
                 }
-                delay(5000L)
+                delay(1000L)
             }
         }
         mCoroutineScope.runQueue(mJobQueue)
     }
 
-    fun connect() {
+    open fun connect() {
         mCoroutineScope.queueJob(mJobQueue) {
             if (!mGatt.isConnected) {
                 mGatt.connect()
@@ -109,30 +110,30 @@ abstract class PtmGattInterface(private val device: BluetoothDevice) {
     )
 
     protected fun readCharacteristic(service: UUID, characteristic: UUID) {
-        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
         mCoroutineScope.queueJob(mJobQueue) {
+            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
             mGatt.readCharacteristic(char)
             characteristicCallback(char, char.value)
         }
     }
 
     protected fun writeCharacteristic(service: UUID, characteristic: UUID, value: ByteArray) {
-        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
         mCoroutineScope.queueJob(mJobQueue) {
+            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
             char.value = value
             mGatt.writeCharacteristic(char)
         }
     }
 
     protected fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
-        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
         mCoroutineScope.queueJob(mJobQueue) {
+            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
             mGatt.readCharacteristic(char)
             characteristicCallback(char, char.value)
-            mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, true)
-        }
-        mCoroutineScope.launch {
-            mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
+            mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)
+            mCoroutineScope.launch {
+                mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
+            }
         }
     }
 }
