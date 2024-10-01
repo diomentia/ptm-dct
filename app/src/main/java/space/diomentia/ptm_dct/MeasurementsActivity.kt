@@ -114,7 +114,6 @@ class MeasurementsActivity : ComponentActivity() {
 private fun Contents() {
     val gatt = LocalGattConnection.current
     LaunchedEffect(Unit) {
-        gatt?.sendCommand(PtmMikSerialPort.Command.Authentication)
         gatt?.sendCommand(PtmMikSerialPort.Command.GetStatus)
     }
     Column(
@@ -147,8 +146,7 @@ private fun Contents() {
                         Text("${gatt?.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Text("Auth: ${gatt?.authInfo}")
-                Text("Status: ${gatt?.statusInfo}")
+                Text("Battery: ${gatt?.statusInfo?.battery}")
             }
         }
     }

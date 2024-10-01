@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import space.diomentia.ptm_dct.data.mik.MikStatus
 import space.diomentia.ptm_dct.queueJob
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -33,7 +34,7 @@ class PtmMikSerialPort(private val device: BluetoothDevice) : PtmGattInterface(d
     }
 
     companion object {
-        val MTU: Int = 512
+        const val MTU: Int = 512
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         val CHAR_BATTERY_LEVEL: UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
@@ -44,9 +45,7 @@ class PtmMikSerialPort(private val device: BluetoothDevice) : PtmGattInterface(d
 
     var batteryLevel by mutableIntStateOf(0)
         private set
-    var authInfo by mutableStateOf("null")
-        private set
-    var statusInfo by mutableStateOf("null")
+    var statusInfo by mutableStateOf<MikStatus?>(null)
         private set
 
     private var readJobTime: Long = 0L
@@ -89,8 +88,8 @@ class PtmMikSerialPort(private val device: BluetoothDevice) : PtmGattInterface(d
         value: String
     ) {
         when (command) {
-            Command.GetStatus -> statusInfo = value
-            Command.Authentication -> authInfo = value
+            Command.GetStatus -> statusInfo = MikStatus.parse(value)
+            else -> Unit
         }
     }
 
