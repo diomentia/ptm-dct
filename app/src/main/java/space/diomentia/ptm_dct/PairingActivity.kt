@@ -4,9 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -41,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -50,16 +46,15 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
-import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.bluetooth.PtmGattInterface
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
 import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
-import java.io.IOException
 
 private var mIsDiscovering by mutableStateOf(false)
 private val mFoundDevices = mutableStateMapOf<String, BluetoothDevice>()
@@ -269,29 +264,12 @@ private fun ConnectableBtDevice(
         return
     }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = LocalSnackbarHostState.current
     Column(
         modifier = Modifier
             .clickable {
-                try {
-                    device.connectGatt(context, false, object : BluetoothGattCallback() {
-                        override fun onConnectionStateChange(
-                            gatt: BluetoothGatt?,
-                            status: Int,
-                            newState: Int
-                        ) {
-                            super.onConnectionStateChange(gatt, status, newState)
-                            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                                gatt?.disconnect()
-                                (context as? PairingActivity)?.finishWithResult(device)
-                            }
-                        }
-                    })?.connect()
-                } catch (ioe: IOException) {
-                    coroutineScope.launch {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                        snackbarHostState.showSnackbar("An error occurred: $ioe")
+                PtmGattInterface.checkIfAccessible(context, device) { isAccessible ->
+                    if (isAccessible) {
+                        (context as? PairingActivity)?.finishWithResult(device)
                     }
                 }
             }

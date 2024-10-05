@@ -155,8 +155,8 @@ val Typography = Typography(
     labelLarge = TextStyle(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
         letterSpacing = 0.sp
     )
 )
