@@ -35,10 +35,13 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         override fun toString(): String = command
 
         fun withArgs(vararg args: String): String =
-            if (hasArgs)
+            if (hasArgs || args.isEmpty())
                 when (this) {
                     Setup -> command.format(args.joinToString(", "))
-                    else -> command.format(args.joinToString(" "))
+                    else -> if (args.isNotEmpty())
+                        command.format(args.joinToString(" "))
+                    else
+                        command
                 }
             else
                 throw IllegalArgumentException("This command cannot have any arguments")
@@ -114,7 +117,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         }
     }
 
-    fun sendCommand(command: Command) {
+    fun sendCommand(command: Command, vararg args: String) {
         when (command) {
             Command.GetJournal -> journal.clear()
             else -> Unit
@@ -123,7 +126,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             writeCharacteristic(
                 SERVICE_DATA,
                 CHAR_WRITE,
-                command.toString().toByteArray()
+                command.withArgs(*args).toByteArray()
             )
             mCoroutineScope.queueJob(mJobQueue) receiveData@{
                 if (!isConnected)

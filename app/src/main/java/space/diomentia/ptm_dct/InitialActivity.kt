@@ -326,7 +326,7 @@ private fun PasswordField(
                 passwordInput = ""
                 focusManager.clearFocus()
             },
-            shape = RoundedCornerShape(30)
+            shape = RoundedCornerShape(20)
         ) {
             Icon(
                 Icons.Default.Done,
