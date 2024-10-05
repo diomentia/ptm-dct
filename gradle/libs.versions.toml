@@ -1,13 +1,21 @@
 [versions]
-agp = "8.5.0"
+agp = "8.5.2"
 kotlin = "1.9.0"
-coreKtx = "1.10.1"
+coreKtx = "1.13.1"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-lifecycleRuntimeKtx = "2.6.1"
-activityCompose = "1.8.0"
-composeBom = "2024.04.01"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.8.4"
+activityCompose = "1.9.1"
+composeBom = "2024.06.00"
+materialIconsExtended = "1.6.8"
+lifecycleProcess = "2.8.4"
+uiTiles = "2.4.0"
+uiTilesExtended = "2.4.0"
+preferenceKtx = "1.2.1"
+accompanistPermissions = "0.35.1-alpha"
+blegattcoroutinesCore = "0.5.0"
+blegattcoroutinesGenericaccess = "0.5.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -24,6 +32,14 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
+ui-tiles = { group = "com.github.alorma.compose-settings", name = "ui-tiles", version.ref = "uiTiles" }
+ui-tiles-extended = { group = "com.github.alorma.compose-settings", name = "ui-tiles-extended", version.ref = "uiTilesExtended" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
+blegattcoroutines-core = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-core", version.ref = "blegattcoroutinesCore" }
+blegattcoroutines-genericaccess = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-genericaccess", version.ref = "blegattcoroutinesGenericaccess" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

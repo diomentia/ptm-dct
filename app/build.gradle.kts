@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "space.diomentia.mcmcontroller"
+    namespace = "space.diomentia.ptm_dct"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "space.diomentia.mcmcontroller"
-        minSdk = 21
+        applicationId = "space.diomentia.ptm_dct"
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "0.0"
@@ -59,6 +59,15 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(files("libs/platform_sdk_v4.1.0326.jar"))
+    implementation(files("libs/USDKLibrary-v2.3.0628.aar"))
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.ui.tiles)
+    implementation(libs.ui.tiles.extended)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.blegattcoroutines.core)
+    implementation(libs.blegattcoroutines.genericaccess)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,4 +75,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(kotlin("reflect"))
 }
