@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Battery0Bar
 import androidx.compose.material.icons.filled.Battery2Bar
@@ -51,6 +53,7 @@ import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
+import space.diomentia.ptm_dct.ui.theme.blue_mirage
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
 
 class MeasurementsActivity : ComponentActivity() {
@@ -132,7 +135,6 @@ private fun Contents() {
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
             sendCommand(PtmMikSerialPort.Command.GetJournal)
-            sendCommand(PtmMikSerialPort.Command.GetSetup)
         }
     }
     if (!gatt.hasLastCommandSucceeded.second) {
@@ -148,6 +150,7 @@ private fun Contents() {
     }
     Column(
         modifier = Modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -178,12 +181,10 @@ private fun Contents() {
                     }
                 }
                 Text("Status: ${gatt.statusInfo}")
-                Text("Setup: ${gatt.setupInfo}")
-                Spacer(Modifier.height(20.dp))
-                gatt.journal.fastForEachIndexed { i, entry ->
-                    Text("${i + 1}. $entry")
-                }
             }
+        }
+        gatt.journal.fastForEachIndexed { i, entry ->
+            Text("${i + 1}. $entry")
         }
     }
     if (!gatt.isConnected) {
@@ -191,7 +192,7 @@ private fun Contents() {
             stringResource(R.string.no_connection),
             modifier = Modifier
                 .fillMaxSize()
-                .background(blue_oxford.copy(alpha = .7f))
+                .background(blue_mirage.copy(alpha = .7f))
                 .wrapContentSize()
                 .padding(32.dp),
             style = MaterialTheme.typography.labelLarge,

@@ -72,8 +72,8 @@ fun PtmTopBar(
                 Box {
                     navigation()
                 }
-                Box(Modifier.padding(horizontal = 4.dp)) {
-                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                Box(Modifier.padding(8.dp)) {
+                    ProvideTextStyle(MaterialTheme.typography.headlineMedium) {
                         title()
                     }
                 }

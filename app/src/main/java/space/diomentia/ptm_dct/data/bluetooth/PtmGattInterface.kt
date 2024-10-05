@@ -2,12 +2,7 @@ package space.diomentia.ptm_dct.data.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothProfile
-import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,38 +15,33 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import space.diomentia.ptm_dct.cancelWithQueue
 import space.diomentia.ptm_dct.queueJob
 import space.diomentia.ptm_dct.runQueue
-import java.io.IOException
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class)
 abstract class PtmGattInterface(device: BluetoothDevice) {
     companion object {
-        fun checkIfAccessible(
-            context: Context,
-            device: BluetoothDevice,
-            callback: (Boolean) -> Unit
-        ) {
-            try {
-                device.connectGatt(context, false, object : BluetoothGattCallback() {
-                    override fun onConnectionStateChange(
-                        gatt: BluetoothGatt?,
-                        status: Int,
-                        newState: Int
-                    ) {
-                        super.onConnectionStateChange(gatt, status, newState)
-                        if (newState == BluetoothProfile.STATE_CONNECTED) {
-                            callback(true)
-                            gatt?.close()
-                        }
-                    }
-                })?.connect()
-            } catch (ioe: IOException) {
-                Log.e(ioe::class.java.name, ioe.toString())
+        suspend fun isAccessible(
+            device: BluetoothDevice
+        ): Boolean {
+            if (
+                device.type == BluetoothDevice.DEVICE_TYPE_LE
+                || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
+            ) {
+                val gatt = GattConnection(device)
+                withTimeoutOrNull(2000L) {
+                    gatt.connect()
+                }
+                if (gatt.isConnected) {
+                    gatt.close()
+                    return true
+                }
             }
+            return false
         }
     }
 

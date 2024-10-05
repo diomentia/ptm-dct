@@ -1,8 +1,11 @@
 package space.diomentia.ptm_dct.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import space.diomentia.ptm_dct.ui.theme.blue_robins_egg
 
@@ -80,27 +84,35 @@ fun DownArrowContainer(
     val screenSize = getWindowSize()
     var absCoordinates by remember { mutableStateOf(Offset.Zero) }
     val offset = screenSize.height / slantFactor / 3 * 2
-    Box(Modifier
-        .onGloballyPositioned { coordinates ->
-            absCoordinates = coordinates.positionInWindow()
-        }
-        .drawWithCache {
-            val downArrow = Path().apply {
-                moveTo(-absCoordinates.x, -absCoordinates.y)
-                lineTo(-absCoordinates.x, size.height)
-                lineTo(screenSize.width / 2f - absCoordinates.x, size.height + offset)
-                lineTo(screenSize.width - absCoordinates.x, size.height)
-                lineTo(screenSize.width - absCoordinates.x, -absCoordinates.y)
+    Column {
+        Box(Modifier
+            .onGloballyPositioned { coordinates ->
+                absCoordinates = coordinates.positionInWindow()
             }
-            onDrawBehind {
-                drawPath(downArrow, containerColor)
+            .drawWithCache {
+                val downArrow = Path().apply {
+                    moveTo(-absCoordinates.x, -absCoordinates.y)
+                    lineTo(-absCoordinates.x, size.height)
+                    lineTo(screenSize.width / 2f - absCoordinates.x, size.height + offset)
+                    lineTo(screenSize.width - absCoordinates.x, size.height)
+                    lineTo(screenSize.width - absCoordinates.x, -absCoordinates.y)
+                }
+                onDrawBehind {
+                    drawPath(downArrow, containerColor)
+                }
+            }
+            .then(
+                modifier
+            )
+        ) {
+            CompositionLocalProvider(LocalContentColor provides contentColor) {
+                content()
             }
         }
-        .then(modifier)
-    ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
-            content()
-        }
+        Spacer(
+            Modifier
+                .height(with(LocalDensity.current) { offset.toDp() })
+        )
     }
 }
 

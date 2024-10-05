@@ -20,12 +20,17 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
@@ -53,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -149,7 +155,6 @@ private fun Contents(
     ) {
         SideArrowContainer(
             modifier = Modifier
-                .weight(1f)
                 .padding(vertical = 8.dp),
             toRight = false,
             slantFactor = 4
@@ -158,8 +163,8 @@ private fun Contents(
                 painter = painterResource(R.drawable.logo_ptm),
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
-                    .padding(16.dp)
-                    .widthIn(min = 64.dp, max = 150.dp)
+                    .padding(24.dp)
+                    .heightIn(min = 64.dp, max = 175.dp)
                     .fillMaxSize()
             )
         }
@@ -167,10 +172,10 @@ private fun Contents(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
+                .padding(vertical = 16.dp)
         )
         // TODO: segmented button USB/Bluetooth
-        PasswordField()
+        PasswordField(Modifier.padding(8.dp))
         Row(
             modifier = Modifier
                 .padding(vertical = 8.dp)
@@ -238,7 +243,7 @@ private fun StepHelper(
                 label = hint.hintResource.toString()
             )
             val fontSize = animateIntAsState(
-                if (hint.isMain && stepState == 0) 16 else 14,
+                if (hint.isMain && stepState == 0) 18 else 14,
                 label = hint.hintResource.toString()
             )
             AnimatedVisibility(
@@ -273,14 +278,16 @@ private fun PasswordField(
         }
     }
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(IntrinsicSize.Min)
+            .padding(vertical = 16.dp)
     ) {
         var passwordInput by remember { mutableStateOf("") }
         TextField(
             singleLine = true,
             modifier = Modifier
                 .weight(1f)
-                .padding(vertical = 16.dp)
                 .then(modifier),
             label = { Text(stringResource(R.string.password)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -299,9 +306,12 @@ private fun PasswordField(
             value = passwordInput,
             onValueChange = { passwordInput = it }
         )
+        val focusManager = LocalFocusManager.current
         FilledIconButton(
             modifier = Modifier
-                .padding(8.dp),
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .padding(12.dp),
             onClick = {
                 Session.updateUserLevel(passwordInput)
                 if (currentStep >= Step.Password) {
@@ -314,11 +324,16 @@ private fun PasswordField(
                     }
                 }
                 passwordInput = ""
-            }
+                focusManager.clearFocus()
+            },
+            shape = RoundedCornerShape(30)
         ) {
             Icon(
                 Icons.Default.Done,
-                contentDescription = stringResource(R.string.apply)
+                contentDescription = stringResource(R.string.apply),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
             )
         }
     }
@@ -335,10 +350,10 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    // if (currentStep == Step.RfidManager && RfidController.isAvailable ||
-    //     currentStep == Step.RfidTag && Session.rfidTag != null) {
+    if (currentStep == Step.RfidManager && RfidController.isAvailable ||
+        currentStep == Step.RfidTag && Session.rfidTag != null) {
     // to test app without a device with RFID
-    if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
+    // if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }

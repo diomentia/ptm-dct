@@ -108,55 +108,46 @@ val MontserratItalicFF = FontFamily(
     )
 )
 
-// Set of Material typography styles to start with
-val Typography = Typography(
-    bodyLarge = TextStyle(
+val defaultTypo = Typography()
+val MikTypography = Typography(
+    bodyLarge = defaultTypo.bodyLarge.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
-    bodyMedium = TextStyle(
+    bodyMedium = defaultTypo.bodyMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Normal,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
         letterSpacing = 0.2.sp
     ),
-    titleLarge = TextStyle(
+    titleLarge = defaultTypo.titleLarge.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 30.sp,
-        lineHeight = 46.sp,
         letterSpacing = 0.sp
     ),
-    titleMedium = TextStyle(
+    titleMedium = defaultTypo.titleMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
         letterSpacing = 0.sp
     ),
-    labelSmall = TextStyle(
+    headlineMedium = defaultTypo.headlineMedium.copy(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 0.sp
+    ),
+    labelSmall = defaultTypo.labelSmall.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     ),
-    labelMedium = TextStyle(
+    labelMedium = defaultTypo.labelMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
-    labelLarge = TextStyle(
+    labelLarge = defaultTypo.labelLarge.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 20.sp,
-        lineHeight = 28.sp,
         letterSpacing = 0.sp
     )
 )
