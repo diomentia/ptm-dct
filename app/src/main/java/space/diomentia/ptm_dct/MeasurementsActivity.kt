@@ -4,11 +4,16 @@ import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Battery0Bar
@@ -26,13 +31,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
+import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
@@ -41,6 +51,7 @@ import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
+import space.diomentia.ptm_dct.ui.theme.blue_oxford
 
 class MeasurementsActivity : ComponentActivity() {
     private var mDevice: BluetoothDevice? = null
@@ -112,9 +123,28 @@ class MeasurementsActivity : ComponentActivity() {
 
 @Composable
 private fun Contents() {
-    val gatt = LocalGattConnection.current
+    val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    val gatt = LocalGattConnection.current ?: throw IllegalStateException()
     LaunchedEffect(Unit) {
-        gatt?.sendCommand(PtmMikSerialPort.Command.GetStatus)
+        gatt.run {
+            sendCommand(PtmMikSerialPort.Command.Authentication)
+            sendCommand(PtmMikSerialPort.Command.GetStatus)
+            sendCommand(PtmMikSerialPort.Command.GetJournal)
+            sendCommand(PtmMikSerialPort.Command.GetSetup)
+        }
+    }
+    if (!gatt.hasLastCommandSucceeded.second) {
+        gatt.hasLastCommandSucceeded.first?.let {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    context.resources
+                        .getString(R.string.command_not_succeeded)
+                        .format(it.name)
+                )
+            }
+        }
     }
     Column(
         modifier = Modifier
@@ -125,6 +155,7 @@ private fun Contents() {
         DownArrowContainer {
             Column {
                 Surface(
+                    modifier = Modifier.fillMaxWidth().wrapContentSize(),
                     shape = RoundedCornerShape(100),
                     color = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -135,7 +166,7 @@ private fun Contents() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            when (gatt?.batteryLevel) {
+                            when (gatt.batteryLevel) {
                                 in 75..100 -> Icons.Default.BatteryFull
                                 in 50 until 75 -> Icons.Default.Battery5Bar
                                 in 25 until 50 -> Icons.Default.Battery2Bar
@@ -143,12 +174,30 @@ private fun Contents() {
                             },
                             contentDescription = stringResource(R.string.current_charge)
                         )
-                        Text("${gatt?.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
+                        Text("${gatt.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Text("Battery: ${gatt?.statusInfo?.battery}")
+                Text("Status: ${gatt.statusInfo}")
+                Text("Setup: ${gatt.setupInfo}")
+                Spacer(Modifier.height(20.dp))
+                gatt.journal.fastForEachIndexed { i, entry ->
+                    Text("${i + 1}. $entry")
+                }
             }
         }
+    }
+    if (!gatt.isConnected) {
+        Text(
+            stringResource(R.string.no_connection),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(blue_oxford.copy(alpha = .7f))
+                .wrapContentSize()
+                .padding(32.dp),
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+
+        )
     }
 }
 
