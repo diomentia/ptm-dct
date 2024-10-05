@@ -106,8 +106,14 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             Command.Authentication -> MikAuth.parse(value).also { authInfo = it } != null
             Command.GetStatus -> MikStatus.parse(value).also { statusInfo = it } != null
             Command.SetDateTime, Command.Setup -> value == "Ok"
-            Command.GetSetup -> { setupInfo = value; true }
-            Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
+            Command.GetSetup -> {
+                setupInfo = value; true
+            }
+
+            Command.GetJournal -> if (!value.contains("EndJournal"))
+                MikJournalEntry.parse(value)?.also { journal.add(it) } != null
+            else
+                true
         }
     }
 
