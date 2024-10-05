@@ -8,10 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +52,6 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
-import space.diomentia.ptm_dct.ui.theme.blue_oxford
 
 class MeasurementsActivity : ComponentActivity() {
     private var mDevice: BluetoothDevice? = null
@@ -134,6 +131,7 @@ private fun Contents() {
         gatt.run {
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
+            sendCommand(PtmMikSerialPort.Command.GetSetup)
             sendCommand(PtmMikSerialPort.Command.GetJournal)
         }
     }
@@ -180,7 +178,9 @@ private fun Contents() {
                         Text("${gatt.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Text("Status: ${gatt.statusInfo}")
+                Text("Auth:\n${gatt.authInfo}\n")
+                Text("Status:\n${gatt.statusInfo}\n")
+                Text("Setup:\n${gatt.statusInfo}\n")
             }
         }
         gatt.journal.fastForEachIndexed { i, entry ->

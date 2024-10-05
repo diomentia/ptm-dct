@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import space.diomentia.ptm_dct.data.mik.MikAuth
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
@@ -44,6 +43,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             else
                 throw IllegalArgumentException("This command cannot have any arguments")
     }
+
 
     companion object {
         const val MTU: Int = 512
@@ -110,10 +110,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                 setupInfo = value; true
             }
 
-            Command.GetJournal -> if (!value.contains("EndJournal"))
-                MikJournalEntry.parse(value)?.also { journal.add(it) } != null
-            else
-                true
+            Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
         }
     }
 
@@ -131,24 +128,33 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             mCoroutineScope.queueJob(mJobQueue) receiveData@{
                 if (!isConnected)
                     return@receiveData
-                var data = ""
-                val reader = suspend {
+                suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
                     withTimeoutOrNull(MAX_READ_WAIT) {
-                        data = readData.receive()
+                        val data = readData.receive()
+                        if (!dataValidation(data))
+                            return@withTimeoutOrNull false
                         commandCallback(command, data)
-                        true
+                        return@withTimeoutOrNull true
                     }.also {
                         if (it == null) {
                             hasLastCommandSucceeded = command to false
                         }
                     }
-                }
                 when (command) {
-                    Command.GetJournal ->
-                        while (!data.contains("EndJournal")) {
-                            if (reader() == null)
-                                return@receiveData
+                    Command.GetJournal -> {
+                        var entryNumber = 0
+                        if (reader { value ->
+                            Regex("""journal entries=(\d+)""").find(value).let {
+                                entryNumber = it?.groupValues?.get(1)?.toInt() ?: 0
+                                return@reader it == null
+                            }
+                        } == true) {
+                            while (reader { !it.contains("EndJournal") } != true) {}
+                        } else {
+                            repeat(entryNumber) { reader() }
                         }
+                    }
+
                     else -> reader()
                 }
             }
