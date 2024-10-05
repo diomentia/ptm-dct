@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,7 +69,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
@@ -299,6 +299,7 @@ private fun PasswordField(
             value = passwordInput,
             onValueChange = { passwordInput = it }
         )
+        val focusManager = LocalFocusManager.current
         FilledIconButton(
             modifier = Modifier
                 .padding(8.dp),
@@ -314,6 +315,7 @@ private fun PasswordField(
                     }
                 }
                 passwordInput = ""
+                focusManager.clearFocus()
             }
         ) {
             Icon(
