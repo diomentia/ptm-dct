@@ -4,9 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,9 +11,12 @@ import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -25,9 +25,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
@@ -49,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -56,7 +56,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
+import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
+import com.beepiz.bluetooth.gattcoroutines.GattConnection
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
@@ -65,7 +68,9 @@ import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
-import java.io.IOException
+import space.diomentia.ptm_dct.ui.theme.blue_mirage
+import space.diomentia.ptm_dct.ui.theme.blue_oxford
+import space.diomentia.ptm_dct.ui.theme.white
 
 private var mIsDiscovering by mutableStateOf(false)
 private val mFoundDevices = mutableStateListOf<BluetoothDevice>()
@@ -91,7 +96,10 @@ class PairingActivity : ComponentActivity() {
                         finish()
                     }
                 }
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> mIsDiscovering = true
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                    mIsDiscovering = true
+                    mFoundDevices.clear()
+                }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> mIsDiscovering = false
                 BluetoothDevice.ACTION_FOUND -> {
                     IntentCompat.getParcelableExtra(
@@ -193,7 +201,7 @@ class PairingActivity : ComponentActivity() {
         mBtAdapter?.apply {
             mBondedDevices.apply list@{
                 clear()
-                mBtAdapter?.bondedDevices?.filterNotNullTo(this@list)
+                bondedDevices?.filterNotNullTo(this@list)
             }
             startDiscovery()
         }
@@ -228,6 +236,7 @@ private fun Contents(
         (LocalContext.current as? Activity)?.finish()
             ?: throw Exception("Bluetooth permissions should have been granted already")
     }
+    val horizontalPadding = Modifier.padding(horizontal = 16.dp)
     LazyColumn(
         modifier = Modifier
             .padding(
@@ -236,7 +245,6 @@ private fun Contents(
                 end = padding.calculateEndPadding(LocalLayoutDirection.current),
                 bottom = 0.dp
             )
-            .then(Modifier.padding(horizontal = 16.dp))
             .then(modifier)
     ) {
         item {
@@ -245,7 +253,7 @@ private fun Contents(
             Text(
                 stringResource(R.string.found_devices),
                 style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(vertical = 16.dp).then(horizontalPadding)
             )
         }
         mFoundDevices
@@ -253,9 +261,9 @@ private fun Contents(
             .fastForEachIndexed { i, device ->
                 item {
                     if (i > 0) {
-                        HorizontalDivider()
+                        HorizontalDivider(horizontalPadding)
                     }
-                    ConnectableDeviceItem(device)
+                    ConnectableDeviceItem(device, modifier = horizontalPadding)
                 }
             }
 
@@ -264,15 +272,15 @@ private fun Contents(
                 Text(
                     stringResource(R.string.known_devices),
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = 16.dp).then(horizontalPadding)
                 )
             }
             mBondedDevices.fastForEachIndexed { i, device ->
                 item {
                     if (i > 0) {
-                        HorizontalDivider(Modifier.padding(horizontal = 8.dp))
+                        HorizontalDivider(horizontalPadding)
                     }
-                    ConnectableDeviceItem(device)
+                    ConnectableDeviceItem(device, modifier = horizontalPadding)
                 }
             }
         }
@@ -281,6 +289,7 @@ private fun Contents(
     }
 }
 
+@OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class, ExperimentalAnimationGraphicsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 private fun ConnectableDeviceItem(
@@ -292,46 +301,51 @@ private fun ConnectableDeviceItem(
     }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = LocalSnackbarHostState.current
-    Column(
+    var isConnecting by remember { mutableStateOf(false) }
+    Row(
         modifier = Modifier
-            .clickable {
-                try {
-                    device.connectGatt(context, false, object : BluetoothGattCallback() {
-                        override fun onConnectionStateChange(
-                            gatt: BluetoothGatt?,
-                            status: Int,
-                            newState: Int
-                        ) {
-                            super.onConnectionStateChange(gatt, status, newState)
-                            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                                gatt?.disconnect()
-                                (context as? PairingActivity)?.finishWithResult(device)
-                            }
+            .clickable(
+                enabled = !isConnecting
+            ) {
+                coroutineScope.launch {
+                    isConnecting = true
+                    if (
+                        device.type == BluetoothDevice.DEVICE_TYPE_LE
+                        || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
+                    ) {
+                        val gatt = GattConnection(device)
+                        withTimeoutOrNull(2000L) {
+                            gatt.connect()
                         }
-                    })?.connect()
-                } catch (ioe: IOException) {
-                    coroutineScope.launch {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                        snackbarHostState.showSnackbar("An error occurred: $ioe")
+                        if (gatt.isConnected) {
+                            gatt.close()
+                            (context as? PairingActivity)?.finishWithResult(device)
+                        }
                     }
+                    isConnecting = false
                 }
             }
             .fillMaxWidth()
-            .padding(16.dp)
+            .background(if (isConnecting) blue_mirage else Color.Transparent)
+            .wrapContentSize()
+            .fillMaxWidth()
+            .padding(vertical = 24.dp, horizontal = 24.dp)
             .then(modifier)
     ) {
-        Text(
-            device.name ?: device.address,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(Modifier.height(4.dp))
-        if (device.name != null) {
+        Column {
             Text(
-                device.address,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.alpha(.5f)
+                device.name ?: device.address,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isConnecting) blue_oxford else white
             )
+            Spacer(Modifier.height(4.dp))
+            if (device.name != null) {
+                Text(
+                    device.address,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.alpha(.5f)
+                )
+            }
         }
     }
 }
