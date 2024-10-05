@@ -133,7 +133,6 @@ private fun Contents() {
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
             sendCommand(PtmMikSerialPort.Command.GetJournal)
-            sendCommand(PtmMikSerialPort.Command.GetSetup)
         }
     }
     if (!gatt.hasLastCommandSucceeded.second) {
@@ -179,12 +178,10 @@ private fun Contents() {
                     }
                 }
                 Text("Status: ${gatt.statusInfo}")
-                Text("Setup: ${gatt.setupInfo}")
-                Spacer(Modifier.height(20.dp))
-                gatt.journal.fastForEachIndexed { i, entry ->
-                    Text("${i + 1}. $entry")
-                }
             }
+        }
+        gatt.journal.fastForEachIndexed { i, entry ->
+            Text("${i + 1}. $entry")
         }
     }
     if (!gatt.isConnected) {
