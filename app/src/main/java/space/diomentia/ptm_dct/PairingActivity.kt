@@ -145,7 +145,7 @@ class PairingActivity : ComponentActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = { PtmTopBar(
-                            title = { Text(stringResource(R.string.choose_kip)) },
+                            title = { Text(stringResource(R.string.connection)) },
                             navigation = {
                                 IconButton(onClick = {
                                     setResult(RESULT_CANCELED)
@@ -252,7 +252,7 @@ private fun Contents(
 
             Text(
                 stringResource(R.string.found_devices),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(vertical = 16.dp).then(horizontalPadding)
             )
         }
@@ -261,7 +261,7 @@ private fun Contents(
             .fastForEachIndexed { i, device ->
                 item {
                     if (i > 0) {
-                        HorizontalDivider(horizontalPadding)
+                        HorizontalDivider(Modifier.padding(horizontal = 8.dp).then(horizontalPadding))
                     }
                     ConnectableDeviceItem(device, modifier = horizontalPadding)
                 }
@@ -271,14 +271,14 @@ private fun Contents(
             item {
                 Text(
                     stringResource(R.string.known_devices),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(vertical = 16.dp).then(horizontalPadding)
                 )
             }
             mBondedDevices.fastForEachIndexed { i, device ->
                 item {
                     if (i > 0) {
-                        HorizontalDivider(horizontalPadding)
+                        HorizontalDivider(Modifier.padding(horizontal = 8.dp).then(horizontalPadding))
                     }
                     ConnectableDeviceItem(device, modifier = horizontalPadding)
                 }

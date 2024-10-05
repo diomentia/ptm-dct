@@ -26,7 +26,7 @@ fun PtmTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = MikTypography,
         content = content
     )
 }
