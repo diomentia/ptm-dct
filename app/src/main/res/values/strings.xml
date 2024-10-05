@@ -31,4 +31,6 @@
     <string name="hide_password">Скрыть пароль</string>
     <string name="show_password">Показать пароль</string>
     <string name="apply">Применить</string>
+    <string name="command_not_succeeded">Команда не выполнена: %s</string>
+    <string name="no_connection">Подключение отсутствует</string>
 </resources>

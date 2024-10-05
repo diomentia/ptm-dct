@@ -57,11 +57,10 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
-import com.beepiz.bluetooth.gattcoroutines.GattConnection
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.bluetooth.PtmGattInterface
 import space.diomentia.ptm_dct.data.bluetooth.checkBtPermissions
 import space.diomentia.ptm_dct.data.bluetooth.getBtAdapter
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -309,18 +308,8 @@ private fun ConnectableDeviceItem(
             ) {
                 coroutineScope.launch {
                     isConnecting = true
-                    if (
-                        device.type == BluetoothDevice.DEVICE_TYPE_LE
-                        || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
-                    ) {
-                        val gatt = GattConnection(device)
-                        withTimeoutOrNull(2000L) {
-                            gatt.connect()
-                        }
-                        if (gatt.isConnected) {
-                            gatt.close()
-                            (context as? PairingActivity)?.finishWithResult(device)
-                        }
+                    if (PtmGattInterface.isAccessible(device)) {
+                        (context as? PairingActivity)?.finishWithResult(device)
                     }
                     isConnecting = false
                 }
