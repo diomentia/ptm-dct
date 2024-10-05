@@ -21,14 +21,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,8 +43,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -49,6 +53,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
@@ -62,7 +68,7 @@ import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import java.io.IOException
 
 private var mIsDiscovering by mutableStateOf(false)
-private val mFoundDevices = mutableStateMapOf<String, BluetoothDevice>()
+private val mFoundDevices = mutableStateListOf<BluetoothDevice>()
 private val mBondedDevices = mutableStateListOf<BluetoothDevice>()
 
 class PairingActivity : ComponentActivity() {
@@ -92,7 +98,7 @@ class PairingActivity : ComponentActivity() {
                         intent,
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
-                    )?.let { mFoundDevices[it.address] = it }
+                    )?.let { mFoundDevices.add(it) }
                 }
                 BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
                     mBondedDevices.apply {
@@ -185,10 +191,11 @@ class PairingActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         mBtAdapter?.apply {
-            mBondedDevices.apply {
+            mBondedDevices.apply list@{
                 clear()
-                mBtAdapter?.bondedDevices?.filterNotNullTo(this)
+                mBtAdapter?.bondedDevices?.filterNotNullTo(this@list)
             }
+            startDiscovery()
         }
         registerReceiver(
             btReceiver,
@@ -216,6 +223,7 @@ private fun Contents(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(0.dp)
 ) {
+    val coroutineScope = rememberCoroutineScope()
     if (!checkBtPermissions(LocalContext.current)) {
         (LocalContext.current as? Activity)?.finish()
             ?: throw Exception("Bluetooth permissions should have been granted already")
@@ -226,42 +234,56 @@ private fun Contents(
                 start = padding.calculateStartPadding(LocalLayoutDirection.current),
                 top = 0.dp,
                 end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                bottom = padding.calculateBottomPadding()
+                bottom = 0.dp
             )
             .then(Modifier.padding(horizontal = 16.dp))
             .then(modifier)
     ) {
-        item { Spacer(Modifier.requiredHeight(padding.calculateTopPadding())) }
         item {
-            Text(
-                stringResource(R.string.known_devices),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-        }
-        mBondedDevices.forEach { device ->
-            item {
-                ConnectableBtDevice(device)
-            }
-        }
-        item {
+            Spacer(Modifier.requiredHeight(padding.calculateTopPadding()))
+
             Text(
                 stringResource(R.string.found_devices),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
         }
-        mFoundDevices.forEach { (_, device) ->
+        mFoundDevices
+            .fastFilter { it.name != null && it.address != null }
+            .fastForEachIndexed { i, device ->
+                item {
+                    if (i > 0) {
+                        HorizontalDivider()
+                    }
+                    ConnectableDeviceItem(device)
+                }
+            }
+
+        if (mBondedDevices.size > 0) {
             item {
-                ConnectableBtDevice(device)
+                Text(
+                    stringResource(R.string.known_devices),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            }
+            mBondedDevices.fastForEachIndexed { i, device ->
+                item {
+                    if (i > 0) {
+                        HorizontalDivider(Modifier.padding(horizontal = 8.dp))
+                    }
+                    ConnectableDeviceItem(device)
+                }
             }
         }
+
+        item { Spacer(Modifier.requiredHeight(padding.calculateBottomPadding())) }
     }
 }
 
 @SuppressLint("MissingPermission")
 @Composable
-private fun ConnectableBtDevice(
+private fun ConnectableDeviceItem(
     device: BluetoothDevice,
     modifier: Modifier = Modifier,
 ) {
@@ -295,6 +317,7 @@ private fun ConnectableBtDevice(
                     }
                 }
             }
+            .fillMaxWidth()
             .padding(16.dp)
             .then(modifier)
     ) {
