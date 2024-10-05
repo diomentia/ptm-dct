@@ -8,10 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
@@ -22,17 +22,21 @@ import androidx.compose.material.icons.filled.Battery0Bar
 import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +51,8 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.Session
+import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.ui.DownArrowContainer
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -54,7 +60,6 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
-import space.diomentia.ptm_dct.ui.theme.blue_oxford
 
 class MeasurementsActivity : ComponentActivity() {
     private var mDevice: BluetoothDevice? = null
@@ -134,6 +139,7 @@ private fun Contents() {
         gatt.run {
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
+            sendCommand(PtmMikSerialPort.Command.GetSetup)
             sendCommand(PtmMikSerialPort.Command.GetJournal)
         }
     }
@@ -180,7 +186,29 @@ private fun Contents() {
                         Text("${gatt.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Text("Status: ${gatt.statusInfo}")
+                Text("Auth:\n${gatt.authInfo}\n")
+                Text("Status:\n${gatt.statusInfo}\n")
+                Text("Current Setup:\n${gatt.statusInfo}\n")
+                var setupArgs by remember { mutableStateOf("") }
+                Text("Setup:")
+                Row {
+                    TextField(
+                        setupArgs,
+                        onValueChange = { setupArgs = it },
+                        Modifier.weight(1f)
+                    )
+                    FilledIconButton(
+                        onClick = {
+                            gatt.sendCommand(PtmMikSerialPort.Command.Setup, setupArgs)
+                            gatt.sendCommand(PtmMikSerialPort.Command.GetSetup)
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Done,
+                            contentDescription = stringResource(R.string.apply)
+                        )
+                    }
+                }
             }
         }
         gatt.journal.fastForEachIndexed { i, entry ->

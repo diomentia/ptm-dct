@@ -57,7 +57,7 @@ data class MikStatus(
                 | door ([01]),
                 | Bat=(\d+\.\d+)V,
                 | Temp=(\d+),
-                | ((?:\d+(?:\.\d+)? mV,?)+)
+                | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
                 """.trimMargin().replace("\n", "")
             )
             val voltageRegex = Regex("""(\d+(?:\.\d+)?) mV""")
@@ -121,12 +121,11 @@ data class MikJournalEntry(
         fun parse(raw: String): MikJournalEntry? {
             val regex = Regex(
                 """
-                |jote (\d+-\d+-\d\d\d\d)
-                | TDate (\d+-\d+-\d\d\d\d)
+                |Date (\d+-\d+-\d\d\d\d),
                 | Time (\d+:\d+:\d+),
-                | Bat (\d+\.\d+)V,
-                | Temp (\d+),
-                | ((?:\d+(?:\.\d+)?mV(?:, )?)+)
+                | Bat=(\d+\.\d+)V,
+                | Temp=(\d+),
+                | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
                 """.trimMargin().replace("\n", "")
             )
             val voltageRegex = Regex("""(\d+(?:\.\d+)?)mV""")
