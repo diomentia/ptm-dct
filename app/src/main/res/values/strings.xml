@@ -6,13 +6,13 @@
     <string name="button_bluetooth_pairing">Начать сопряжение с Bluetooth устройством</string>
     <string name="please_turn_on_bluetooth">Пожалуйста, включите Bluetooth на устройстве</string>
     <string name="password">Пароль</string>
-    <string name="connect">Подключение</string>
+    <string name="connection">Подключение</string>
     <string name="input_password">Введите пароль</string>
     <string name="find_rfid_tag">Найдите метку RFID и просканируйте её</string>
     <string name="pair_bluetooth">Подключитесь к КИП по Bluetooth</string>
     <string name="tag_not_found">Метка не найдена</string>
     <string name="cancel">Отмена</string>
-    <string name="accept_tag">Взять метку</string>
+    <string name="accept">Принять</string>
     <string name="wrong_password">Введён неверный пароль</string>
     <string name="connected">Подключение установлено</string>
     <string name="settings">Настройки</string>
@@ -23,10 +23,14 @@
     <string name="password_changed">Пароль сменён на \"%s\"</string>
     <string name="back">Назад</string>
     <string name="current_voltage">Текущее напряжение</string>
-    <string name="choose_kip">Выберете КИП</string>
     <string name="known_devices">Известные устройства</string>
     <string name="found_devices">Найденные устройства</string>
     <string name="start_search">Начать поиск</string>
     <string name="refresh">Обновить</string>
     <string name="current_charge">Текущий заряд</string>
+    <string name="hide_password">Скрыть пароль</string>
+    <string name="show_password">Показать пароль</string>
+    <string name="apply">Применить</string>
+    <string name="command_not_succeeded">Команда не выполнена: %s</string>
+    <string name="no_connection">Подключение отсутствует</string>
 </resources>

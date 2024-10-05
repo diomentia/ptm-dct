@@ -11,8 +11,8 @@ android {
         applicationId = "space.diomentia.ptm_dct"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.0"
+        versionCode = 3
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -50,7 +50,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -68,6 +67,7 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.blegattcoroutines.core)
     implementation(libs.blegattcoroutines.genericaccess)
+    implementation(libs.androidx.animation.graphics)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
