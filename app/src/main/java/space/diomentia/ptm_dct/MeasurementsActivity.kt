@@ -188,7 +188,7 @@ private fun Contents() {
                 }
                 Text("Auth:\n${gatt.authInfo}\n")
                 Text("Status:\n${gatt.statusInfo}\n")
-                Text("Current Setup:\n${gatt.statusInfo}\n")
+                Text("Current Setup:\n${gatt.setupInfo}\n")
                 var setupArgs by remember { mutableStateOf("") }
                 Text("Setup:")
                 Row {
