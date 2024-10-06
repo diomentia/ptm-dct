@@ -134,8 +134,8 @@ data class MikJournalEntry(
                     .find(raw)
                     ?.groupValues
                     ?: throw IllegalArgumentException("Cannot parse JournalEntry: \"$raw\"")
-                val date = matches[2].split("-").map { it.toInt() }
-                val time = matches[3].split(":").map { it.toInt() }
+                val date = matches[1].split("-").map { it.toInt() }
+                val time = matches[2].split(":").map { it.toInt() }
                 MikJournalEntry(
                     // TODO normal date-time format
                     // localDateTime = LocalDateTime.parse("${matches[1]} ${matches[2]}"),
@@ -143,9 +143,9 @@ data class MikJournalEntry(
                         date[2], date[1], date[0],
                         time[0], time[1], time[2]
                     ),
-                    battery = matches[4].toFloat(),
-                    controllerTemperature = matches[5].toInt(),
-                    voltage = voltageRegex.findAll(matches[6]).map {
+                    battery = matches[3].toFloat(),
+                    controllerTemperature = matches[4].toInt(),
+                    voltage = voltageRegex.findAll(matches[5]).map {
                         it.groupValues[1].toFloat()
                     }.toList().toTypedArray()
                 )

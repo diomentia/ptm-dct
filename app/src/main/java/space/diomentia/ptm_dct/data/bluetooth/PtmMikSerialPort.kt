@@ -151,10 +151,11 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                                 entryNumber = it?.groupValues?.get(1)?.toInt() ?: 0
                                 return@reader it == null
                             }
-                        } == true) {
-                            while (reader { !it.contains("EndJournal") } != true) {}
-                        } else {
+                        } == false) {
                             repeat(entryNumber) { reader() }
+                            reader()
+                        } else {
+                            while (reader { !it.contains("EndJournal") } != true) {}
                         }
                     }
 
