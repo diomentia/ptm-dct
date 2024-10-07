@@ -5,24 +5,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Battery0Bar
-import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
-import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material.icons.filled.Thermostat
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,22 +29,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
@@ -173,31 +175,10 @@ private fun Contents(
     ) {
         DownArrowContainer {
             Column {
-                Text("Auth:\n${gatt.authInfo}\n")
-                Text("Status:\n${gatt.statusInfo}\n")
-                Text("Current Setup:\n${gatt.setupInfo}\n")
-                var setupArgs by remember { mutableStateOf("") }
-                Text("Setup:")
-                Row {
-                    TextField(
-                        setupArgs,
-                        onValueChange = { setupArgs = it },
-                        Modifier.weight(1f)
-                    )
-                    FilledIconButton(
-                        onClick = {
-                            gatt.sendCommand(PtmMikSerialPort.Command.Setup, setupArgs)
-                            gatt.sendCommand(PtmMikSerialPort.Command.GetSetup)
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.Done,
-                            contentDescription = stringResource(R.string.apply)
-                        )
-                    }
-                }
+                VoltageGrid(Modifier.fillMaxWidth())
             }
         }
+
         gatt.journal.fastForEachIndexed { i, entry ->
             Text("${i + 1}. $entry")
         }
@@ -207,7 +188,7 @@ private fun Contents(
             stringResource(R.string.no_connection),
             modifier = Modifier
                 .fillMaxSize()
-                .background(blue_mirage.copy(alpha = .7f))
+                .background(blue_mirage.copy(alpha = .8f))
                 .wrapContentSize()
                 .padding(32.dp),
             style = MaterialTheme.typography.labelLarge,
@@ -218,7 +199,7 @@ private fun Contents(
 }
 
 @Composable
-fun StatusBar(
+private fun StatusBar(
     modifier: Modifier = Modifier
 ) {
     /*
@@ -235,18 +216,103 @@ fun StatusBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            when (gatt?.batteryLevel) {
-                in 75..100 -> Icons.Default.BatteryFull
-                in 50 until 75 -> Icons.Default.Battery5Bar
-                in 25 until 50 -> Icons.Default.Battery2Bar
-                else -> Icons.Default.Battery0Bar
-            },
+            Icons.Default.Battery5Bar,
             contentDescription = stringResource(R.string.current_charge)
         )
         Text(
             "%.1fV".format(gatt?.statusInfo?.battery ?: 0f),
             style = MaterialTheme.typography.labelMedium
         )
+
+        Icon(
+            Icons.Default.Thermostat,
+            contentDescription = stringResource(R.string.current_temperature)
+        )
+        Text(
+            "${gatt?.statusInfo?.controllerTemperature ?: 0}°",
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+@Composable
+private fun VoltageGrid(
+    modifier: Modifier = Modifier
+) {
+    @Composable
+    fun VoltageCell(
+        cellNumber: Int,
+        cellValue: Float?,
+        modifier: Modifier = Modifier
+    ) {
+        val fontSize = with(LocalDensity.current) { 24.dp.toSp() }
+        Surface(
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .wrapContentSize()
+                .padding(12.dp)
+                .width(with (LocalDensity.current) { fontSize.toDp() * 5 })
+                .then(modifier)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.Bolt,
+                        contentDescription = null,
+                        modifier = Modifier.size(with (LocalDensity.current) { fontSize.toDp() * .65f })
+                    )
+                    Text(
+                        "#$cellNumber:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = fontSize * .5
+                    )
+                }
+                Text(
+                    buildAnnotatedString {
+                        if (cellValue != null) {
+                            val parts = "%.1f".format(cellValue).split(".")
+                            append(parts[0])
+                            withStyle(SpanStyle(fontSize = 0.5f.em)) {
+                                append(".${parts[1]}mV")
+                            }
+                        }
+                        else {
+                            append("—")
+                        }
+                    },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontSize = fontSize
+                )
+            }
+        }
+    }
+
+    val gatt = LocalGattConnection.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(IntrinsicSize.Min)
+            .then(modifier)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            VoltageCell(1, gatt?.statusInfo?.voltage?.getOrNull(0))
+            VoltageCell(2, gatt?.statusInfo?.voltage?.getOrNull(1))
+        }
+        Row(
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            VoltageCell(3, gatt?.statusInfo?.voltage?.getOrNull(2))
+            VoltageCell(4, gatt?.statusInfo?.voltage?.getOrNull(3))
+        }
     }
 }
 
