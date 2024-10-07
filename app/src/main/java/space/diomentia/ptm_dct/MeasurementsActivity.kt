@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -247,8 +248,9 @@ private fun VoltageGrid(
     ) {
         val fontSize = with(LocalDensity.current) { 24.dp.toSp() }
         Surface(
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            border = BorderStroke(8.dp, MaterialTheme.colorScheme.primary),
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .wrapContentSize()
                 .padding(12.dp)
@@ -302,13 +304,13 @@ private fun VoltageGrid(
             .then(modifier)
     ) {
         Row(
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             VoltageCell(1, gatt?.statusInfo?.voltage?.getOrNull(0))
             VoltageCell(2, gatt?.statusInfo?.voltage?.getOrNull(1))
         }
         Row(
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             VoltageCell(3, gatt?.statusInfo?.voltage?.getOrNull(2))
             VoltageCell(4, gatt?.statusInfo?.voltage?.getOrNull(3))
