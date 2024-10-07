@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -56,6 +57,7 @@ import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.ui.DownArrowContainer
+import space.diomentia.ptm_dct.ui.PtmFilledButton
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
@@ -168,7 +170,6 @@ private fun Contents(
     }
     Column(
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 16.dp)
             .then(modifier),
@@ -179,11 +180,42 @@ private fun Contents(
                 VoltageGrid(Modifier.fillMaxWidth())
             }
         }
-
-        gatt.journal.fastForEachIndexed { i, entry ->
-            Text("${i + 1}. $entry")
+        Spacer(Modifier.weight(1f))
+        PtmFilledButton(
+            {},
+            modifier = Modifier
+                .padding(4.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                stringResource(R.string.open_journal),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        PtmFilledButton(
+            {},
+            modifier = Modifier
+                .padding(4.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                stringResource(R.string.open_kip_passport),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        PtmFilledButton(
+            {},
+            modifier = Modifier
+                .padding(4.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                stringResource(R.string.generate_report),
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
+
     if (!gatt.isConnected) {
         Text(
             stringResource(R.string.no_connection),

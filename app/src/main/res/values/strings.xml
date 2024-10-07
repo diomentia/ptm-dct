@@ -33,4 +33,7 @@
     <string name="apply">Применить</string>
     <string name="command_not_succeeded">Команда не выполнена: %s</string>
     <string name="no_connection">Подключение отсутствует</string>
+    <string name="open_journal">Открыть журнал</string>
+    <string name="open_kip_passport">Открыть паспорт КИПа</string>
+    <string name="generate_report">Сгенерировать отчёт</string>
 </resources>
