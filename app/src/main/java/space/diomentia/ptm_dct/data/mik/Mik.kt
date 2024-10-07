@@ -128,7 +128,7 @@ data class MikJournalEntry(
                 | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
                 """.trimMargin().replace("\n", "")
             )
-            val voltageRegex = Regex("""(\d+(?:\.\d+)?)mV""")
+            val voltageRegex = Regex("""(\d+(?:\.\d+)?) ?mV""")
             return try {
                 val matches = regex
                     .find(raw)
