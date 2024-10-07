@@ -18,7 +18,6 @@ fun CoroutineScope.runQueue(queue: Channel<Job>) = launch {
     for (job in queue) job.join()
 }
 
-
 fun CoroutineScope.cancelWithQueue(queue: Channel<Job>) {
     queue.cancel()
     cancel()

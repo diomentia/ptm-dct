@@ -36,4 +36,5 @@
     <string name="open_journal">Открыть журнал</string>
     <string name="open_kip_passport">Открыть паспорт КИПа</string>
     <string name="generate_report">Сгенерировать отчёт</string>
+    <string name="journal">Журнал</string>
 </resources>

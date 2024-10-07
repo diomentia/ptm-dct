@@ -1,6 +1,7 @@
 package space.diomentia.ptm_dct.data.mik
 
 import android.util.Log
+import java.io.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -100,6 +101,7 @@ data class MikStatus(
         if (!voltage.contentEquals(other.voltage)) return false
         return true
     }
+
     override fun hashCode(): Int {
         var result = timestamp.hashCode()
         result = 31 * result + isDoorOpen.hashCode()
@@ -116,17 +118,28 @@ data class MikJournalEntry(
     val battery: Float,
     val controllerTemperature: Int,
     val voltage: Array<Float>
-) {
+) : Serializable {
     companion object {
         fun parse(raw: String): MikJournalEntry? {
             val regex = Regex(
-                """
-                |Date (\d+-\d+-\d\d\d\d),
-                | Time (\d+:\d+:\d+),
-                | Bat=(\d+\.\d+)V,
-                | Temp=(\d+),
-                | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
-                """.trimMargin().replace("\n", "")
+                (if (raw.startsWith("jote"))
+                    """
+                    |jote (?:\d+-\d+-\d+)
+                    | TDate (\d+-\d+-\d\d\d\d)
+                    | Time (\d+:\d+:\d+),
+                    | Bat (\d+\.\d+)V,
+                    | Temp (\d+),
+                    | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
+                    """
+                else
+                    """
+                    |Date (\d+-\d+-\d\d\d\d),
+                    | Time (\d+:\d+:\d+),
+                    | Bat=(\d+\.\d+)V,
+                    | Temp=(\d+),
+                    | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
+                    """
+                        ).trimMargin().replace("\n", "")
             )
             val voltageRegex = Regex("""(\d+(?:\.\d+)?) ?mV""")
             return try {
@@ -166,6 +179,7 @@ data class MikJournalEntry(
         if (!voltage.contentEquals(other.voltage)) return false
         return true
     }
+
     override fun hashCode(): Int {
         var result = timestamp.hashCode()
         result = 31 * result + battery.hashCode()

@@ -46,8 +46,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".SettingsActivity" />
-        <activity android:name="space.diomentia.ptm_dct.PairingActivity" />
+        <activity android:name=".PairingActivity" />
         <activity android:name=".MeasurementsActivity" />
+        <activity android:name=".JournalActivity" />
     </application>
 
 </manifest>

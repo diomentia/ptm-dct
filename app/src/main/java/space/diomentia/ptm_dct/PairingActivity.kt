@@ -11,7 +11,6 @@ import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -56,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
-import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -240,9 +238,7 @@ private fun Contents(
         modifier = Modifier
             .padding(
                 start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                top = 0.dp,
-                end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                bottom = 0.dp
+                end = padding.calculateEndPadding(LocalLayoutDirection.current)
             )
             .then(modifier)
     ) {
@@ -288,7 +284,6 @@ private fun Contents(
     }
 }
 
-@OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class, ExperimentalAnimationGraphicsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 private fun ConnectableDeviceItem(

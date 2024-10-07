@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
+import com.beepiz.bluetooth.gattcoroutines.OperationFailedException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -37,7 +38,8 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         Setup("Setup %s.", true),
         GetSetup("GetSetup."),
         GetJournal("GetJournal."),
-        ClearJournal("ClearJournal.")
+        ClearJournal("ClearJournal."),
+        Connection("")
         ;
 
         override fun toString(): String = command
@@ -57,7 +59,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
 
     companion object {
-        const val MTU: Int = 512
+        const val MTU: Int = 440
         const val MAX_READ_WAIT: Long = 3000L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
@@ -86,7 +88,12 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
     override fun connect() {
         super.connect()
         mCoroutineScope.queueJob(mJobQueue) {
-            mGatt.requestMtu(MTU)
+            try {
+                mGatt.requestMtu(MTU)
+            } catch (ofe: OperationFailedException) {
+                hasLastCommandSucceeded = Command.Connection to false
+                Log.e("MikConnection", ofe.toString())
+            }
             toggleNotifications(SERVICE_DATA, CHAR_READ, true)
         }
         listenBatteryLevel()
@@ -116,6 +123,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         value: String
     ) {
         hasLastCommandSucceeded = command to when (command) {
+            Command.Connection -> throw IllegalStateException()
             Command.Authentication -> MikAuth.parse(value).also { authInfo = it } != null
             Command.GetStatus -> MikStatus.parse(value).also { statusInfo = it } != null
             Command.GetSetup -> {

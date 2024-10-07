@@ -1,6 +1,7 @@
 package space.diomentia.ptm_dct
 
 import android.bluetooth.BluetoothDevice
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,8 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Battery5Bar
@@ -50,7 +49,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
@@ -63,24 +61,23 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
+import java.io.Serializable
+import java.text.DecimalFormatSymbols
 import java.time.LocalDateTime
 
 class MeasurementsActivity : ComponentActivity() {
-    private var mDevice: BluetoothDevice? = null
+    private lateinit var mDevice: BluetoothDevice
     private var mGattConnection by mutableStateOf<PtmMikSerialPort?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mDevice = IntentCompat.getParcelableExtra(
-            intent,
-            PairingActivity.EXTRA_CONNECTED_DEVICE,
-            BluetoothDevice::class.java
-        )
-        if (mDevice == null) {
-            finish()
-        } else {
-            mGattConnection = PtmMikSerialPort(mDevice!!)
-        }
+        mDevice = IntentCompat
+            .getParcelableExtra(
+                intent,
+                PairingActivity.EXTRA_CONNECTED_DEVICE,
+                BluetoothDevice::class.java
+            )!!
+        mGattConnection = PtmMikSerialPort(mDevice)
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {
@@ -123,19 +120,18 @@ class MeasurementsActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (mGattConnection == null && mDevice != null) {
-            mGattConnection = PtmMikSerialPort(mDevice!!)
+        if (mGattConnection == null) {
+            mGattConnection = PtmMikSerialPort(mDevice)
         }
         if (mGattConnection?.isConnected == false) {
             mGattConnection?.connect()
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         mGattConnection?.cancel()
         mGattConnection = null
-        finish()
     }
 }
 
@@ -182,7 +178,13 @@ private fun Contents(
         }
         Spacer(Modifier.weight(1f))
         PtmFilledButton(
-            {},
+            {
+                context.startActivity(
+                    Intent(context, JournalActivity::class.java).apply {
+                        putExtra(JournalActivity.EXTRA_JOURNAL, gatt.journal.toTypedArray() as Serializable)
+                    }
+                )
+            },
             modifier = Modifier
                 .padding(4.dp)
                 .fillMaxWidth()
@@ -227,7 +229,7 @@ private fun Contents(
             style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center,
 
-        )
+            )
     }
 }
 
@@ -245,7 +247,8 @@ private fun StatusBar(
     val gatt = LocalGattConnection.current
     Row(
         modifier = Modifier
-            .padding(8.dp),
+            .padding(8.dp)
+            .then(modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -278,7 +281,7 @@ private fun VoltageGrid(
         cellValue: Float?,
         modifier: Modifier = Modifier
     ) {
-        val fontSize = with(LocalDensity.current) { 24.dp.toSp() }
+        val fontSize = with(LocalDensity.current) { 28.dp.toSp() }
         Surface(
             border = BorderStroke(8.dp, MaterialTheme.colorScheme.primary),
             color = MaterialTheme.colorScheme.background,
@@ -286,7 +289,7 @@ private fun VoltageGrid(
             modifier = Modifier
                 .wrapContentSize()
                 .padding(12.dp)
-                .width(with (LocalDensity.current) { fontSize.toDp() * 5 })
+                .width(with(LocalDensity.current) { fontSize.toDp() * 5 })
                 .then(modifier)
         ) {
             Column(
@@ -300,7 +303,7 @@ private fun VoltageGrid(
                     Icon(
                         Icons.Outlined.Bolt,
                         contentDescription = null,
-                        modifier = Modifier.size(with (LocalDensity.current) { fontSize.toDp() * .65f })
+                        modifier = Modifier.size(with(LocalDensity.current) { fontSize.toDp() * .65f })
                     )
                     Text(
                         "#$cellNumber:",
@@ -311,13 +314,14 @@ private fun VoltageGrid(
                 Text(
                     buildAnnotatedString {
                         if (cellValue != null) {
-                            val parts = "%.1f".format(cellValue).split(".")
+                            val parts = "%.1f"
+                                .format(cellValue)
+                                .split(DecimalFormatSymbols.getInstance().decimalSeparator)
                             append(parts[0])
                             withStyle(SpanStyle(fontSize = 0.5f.em)) {
                                 append(".${parts[1]}mV")
                             }
-                        }
-                        else {
+                        } else {
                             append("—")
                         }
                     },
@@ -352,6 +356,6 @@ private fun VoltageGrid(
 
 @Preview(showBackground = true)
 @Composable
-fun MainPreview() {
+private fun MainPreview() {
     Contents()
 }

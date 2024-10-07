@@ -25,6 +25,8 @@ import java.util.UUID
 @OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class)
 abstract class PtmGattInterface(device: BluetoothDevice) {
     companion object {
+        const val MAX_PAIR_WAIT = 5000L
+
         suspend fun isAccessible(
             device: BluetoothDevice
         ): Boolean {
@@ -33,7 +35,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
                 || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
             ) {
                 val gatt = GattConnection(device)
-                withTimeoutOrNull(2000L) {
+                withTimeoutOrNull(MAX_PAIR_WAIT) {
                     gatt.connect()
                 }
                 if (gatt.isConnected) {
@@ -76,6 +78,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             if (!mGatt.isConnected) {
                 mGatt.connect()
                 mGatt.discoverServices()
+                while (!mGatt.isConnected) { delay(50L) }
                 isConnected = true
             }
         }
