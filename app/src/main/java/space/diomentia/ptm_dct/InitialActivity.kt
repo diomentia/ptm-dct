@@ -13,7 +13,25 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseInBack
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseInOutQuad
+import androidx.compose.animation.core.EaseInQuad
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.EaseOutCirc
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.TransitionState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -23,13 +41,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -45,19 +64,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,6 +96,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.sp
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.CoroutineScope
@@ -74,7 +104,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
@@ -88,6 +117,8 @@ import space.diomentia.ptm_dct.ui.SideArrowContainer
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
+import space.diomentia.ptm_dct.ui.theme.blue_zodiac
+import space.diomentia.ptm_dct.ui.theme.green_haze
 import space.diomentia.ptm_dct.ui.theme.white
 
 class InitialActivity : ComponentActivity() {
@@ -145,7 +176,7 @@ class InitialActivity : ComponentActivity() {
 private fun Contents(
     modifier: Modifier = Modifier
 ) {
-    var currentStep by LocalStep.current
+    var logoCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 24.dp)
@@ -185,6 +216,44 @@ private fun Contents(
             ScanRfidButton()
             BluetoothPairingButton()
         }
+    }
+
+    var composited by remember { mutableStateOf(false) }
+    val animationSpec = tween<Float>(
+        delayMillis = 300,
+        durationMillis = 700,
+        easing = EaseOutCirc
+    )
+    AnimatedVisibility(
+        !composited,
+        enter = fadeIn(animationSpec),
+        exit = fadeOut(animationSpec)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize(),
+            color = green_haze,
+            shape = RectangleShape
+        ) {}
+        Surface(
+            color = white,
+            shape = RoundedCornerShape(100),
+            modifier = Modifier
+                .fillMaxWidth(.75f)
+                .aspectRatio(1f),
+            shadowElevation = 8.dp
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_ptm),
+                contentDescription = stringResource(R.string.logo_ptm_description),
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxSize()
+            )
+        }
+    }
+    LaunchedEffect(Unit) {
+        composited = true
     }
 }
 
@@ -307,9 +376,13 @@ private fun PasswordField(
             onValueChange = { passwordInput = it }
         )
         val focusManager = LocalFocusManager.current
+        var iconHeight by remember { mutableIntStateOf(0) }
         FilledIconButton(
             modifier = Modifier
-                .fillMaxHeight()
+                .onGloballyPositioned { coordinates ->
+                    iconHeight = coordinates.parentCoordinates?.size?.height ?: 0
+                }
+                .height(with (LocalDensity.current) { iconHeight.toDp() })
                 .aspectRatio(1f)
                 .padding(12.dp),
             onClick = {
