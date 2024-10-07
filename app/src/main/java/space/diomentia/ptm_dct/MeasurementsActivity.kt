@@ -8,8 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Battery0Bar
 import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
@@ -25,6 +24,7 @@ import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -51,8 +51,6 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
-import space.diomentia.ptm_dct.data.Session
-import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.ui.DownArrowContainer
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -60,6 +58,7 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
+import java.time.LocalDateTime
 
 class MeasurementsActivity : ComponentActivity() {
     private var mDevice: BluetoothDevice? = null
@@ -89,7 +88,20 @@ class MeasurementsActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         topBar = {
                             PtmTopBar(
-                                title = { Text(stringResource(R.string.connected)) }
+                                navigation = {
+                                    IconButton(onClick = {
+                                        setResult(RESULT_CANCELED)
+                                        finish()
+                                    }) {
+                                        Icon(
+                                            Icons.AutoMirrored.Default.ArrowBack,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(4.dp),
+                                            contentDescription = stringResource(R.string.back)
+                                        )
+                                    }
+                                }
                             )
                         },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
@@ -119,13 +131,9 @@ class MeasurementsActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        finish()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
         mGattConnection?.cancel()
         mGattConnection = null
+        finish()
     }
 }
 
@@ -140,7 +148,9 @@ private fun Contents() {
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
             sendCommand(PtmMikSerialPort.Command.GetSetup)
+            setDateTime(LocalDateTime.now())
             sendCommand(PtmMikSerialPort.Command.GetJournal)
+            updateStatus()
         }
     }
     if (!gatt.hasLastCommandSucceeded.second) {

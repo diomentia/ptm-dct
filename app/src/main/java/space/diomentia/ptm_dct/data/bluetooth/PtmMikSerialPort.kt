@@ -3,20 +3,27 @@ package space.diomentia.ptm_dct.data.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import space.diomentia.ptm_dct.await
 import space.diomentia.ptm_dct.data.mik.MikAuth
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
 import space.diomentia.ptm_dct.data.mik.MikStatus
 import space.diomentia.ptm_dct.queueJob
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
@@ -29,7 +36,8 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         SetDateTime("SetDateTime %s.", true),
         Setup("Setup %s.", true),
         GetSetup("GetSetup."),
-        GetJournal("GetJournal.")
+        GetJournal("GetJournal."),
+        ClearJournal("ClearJournal.")
         ;
 
         override fun toString(): String = command
@@ -50,7 +58,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     companion object {
         const val MTU: Int = 512
-        const val MAX_READ_WAIT: Long = 2000L
+        const val MAX_READ_WAIT: Long = 3000L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         val CHAR_BATTERY_LEVEL: UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
@@ -73,12 +81,14 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     private val readData = Channel<String>(Channel.UNLIMITED)
 
+    private var updater: Job? = null
+
     override fun connect() {
         super.connect()
         mCoroutineScope.queueJob(mJobQueue) {
             mGatt.requestMtu(MTU)
+            toggleNotifications(SERVICE_DATA, CHAR_READ, true)
         }
-        toggleNotifications(SERVICE_DATA, CHAR_READ, true)
         listenBatteryLevel()
     }
 
@@ -108,69 +118,104 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         hasLastCommandSucceeded = command to when (command) {
             Command.Authentication -> MikAuth.parse(value).also { authInfo = it } != null
             Command.GetStatus -> MikStatus.parse(value).also { statusInfo = it } != null
-            Command.SetDateTime, Command.Setup -> value == "Ok"
             Command.GetSetup -> {
                 setupInfo = value; true
             }
 
             Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
+            Command.SetDateTime, Command.Setup, Command.ClearJournal -> value.trim().lowercase() == "ok"
+        }
+        if (hasLastCommandSucceeded.second) {
+            Log.i("MikCommand", "${command.name}: $value")
+        } else {
+            Log.e("MikCommand", "${command.name}: $value")
         }
     }
 
-    fun sendCommand(command: Command, vararg args: String) {
+    fun sendCommand(command: Command, vararg args: String): Job {
         when (command) {
             Command.GetJournal -> journal.clear()
             else -> Unit
         }
-        mCoroutineScope.queueJob(mJobQueue) {
+        return mCoroutineScope.queueJob(mJobQueue) {
+            if (!isConnected)
+                return@queueJob
             writeCharacteristic(
                 SERVICE_DATA,
                 CHAR_WRITE,
                 command.withArgs(*args).toByteArray()
             )
-            mCoroutineScope.queueJob(mJobQueue) receiveData@{
-                if (!isConnected)
-                    return@receiveData
-                suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
-                    withTimeoutOrNull(MAX_READ_WAIT) {
-                        val data = readData.receive()
-                        if (!dataValidation(data))
-                            return@withTimeoutOrNull false
-                        commandCallback(command, data)
-                        return@withTimeoutOrNull true
-                    }.also {
-                        if (it == null) {
-                            hasLastCommandSucceeded = command to false
-                        }
+            suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
+                withTimeoutOrNull(MAX_READ_WAIT) {
+                    val data = readData.receive()
+                    if (!dataValidation(data))
+                        return@withTimeoutOrNull false
+                    commandCallback(command, data)
+                    return@withTimeoutOrNull true
+                }.also {
+                    if (it == null) {
+                        hasLastCommandSucceeded = command to false
                     }
-                when (command) {
-                    Command.GetJournal -> {
-                        var entryNumber = 0
-                        if (reader { value ->
+                }
+            when (command) {
+                Command.GetJournal -> {
+                    var entryNumber = 0
+                    if (reader { value ->
                             Regex("""journal entries=(\d+)""").find(value).let {
                                 entryNumber = it?.groupValues?.get(1)?.toInt() ?: 0
                                 return@reader it == null
                             }
                         } == false) {
-                            repeat(entryNumber) { reader() }
-                            reader()
-                        } else {
-                            while (reader { !it.contains("EndJournal") } != true) {}
+                        repeat(entryNumber) { reader() }
+                        reader()
+                    } else {
+                        while (reader { !it.contains("EndJournal") } == true) {
                         }
                     }
-
-                    else -> reader()
                 }
+
+                else -> reader()
             }
         }
     }
 
-    fun fetchBatteryLevel() = readCharacteristic(
-        SERVICE_BATTERY,
-        CHAR_BATTERY_LEVEL
-    )
+    fun fetchBatteryLevel() = mCoroutineScope.queueJob(mJobQueue) {
+        readCharacteristic(
+            SERVICE_BATTERY,
+            CHAR_BATTERY_LEVEL
+        )
+    }
+
     fun listenBatteryLevel(enable: Boolean = true) {
         fetchBatteryLevel()
-        toggleNotifications(SERVICE_BATTERY, CHAR_BATTERY_LEVEL, enable)
+        mCoroutineScope.queueJob(mJobQueue) {
+            toggleNotifications(SERVICE_BATTERY, CHAR_BATTERY_LEVEL, enable)
+        }
+    }
+
+    fun updateStatus(enable: Boolean = true) {
+        if (!enable) {
+            updater?.cancel()
+            updater = null
+            return
+        }
+        updater = mCoroutineScope.launch {
+            while (true) {
+                sendCommand(Command.GetStatus).await()
+                delay(1000L)
+            }
+        }
+    }
+
+    fun setDateTime(dt: LocalDateTime) {
+        sendCommand(
+            Command.SetDateTime,
+            dt.format(
+                DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss")
+            )
+        )
+        println(dt.format(
+            DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss")
+        ))
     }
 }

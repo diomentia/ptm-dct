@@ -80,6 +80,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             }
         }
     }
+
     fun disconnect() {
         mCoroutineScope.queueJob(mJobQueue) {
             if (mGatt.isConnected) {
@@ -88,6 +89,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             }
         }
     }
+
     fun cancel() {
         isConnected = false
         mGatt.close()
@@ -99,35 +101,34 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
         value: ByteArray
     )
 
-    protected fun readCharacteristic(service: UUID, characteristic: UUID) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            mGatt.readCharacteristic(char)
-            characteristicCallback(char, char.value)
-        }
+    protected suspend fun readCharacteristic(service: UUID, characteristic: UUID) {
+        if (!isConnected)
+            return
+        val char =
+            mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mGatt.readCharacteristic(char)
+        characteristicCallback(char, char.value)
     }
 
-    protected fun writeCharacteristic(service: UUID, characteristic: UUID, value: ByteArray) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            char.value = value
-            mGatt.writeCharacteristic(char)
-        }
+    protected suspend fun writeCharacteristic(
+        service: UUID,
+        characteristic: UUID,
+        value: ByteArray
+    ) {
+        if (!isConnected)
+            return
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        char.value = value
+        mGatt.writeCharacteristic(char)
     }
 
-    protected fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)
-            mCoroutineScope.launch {
-                mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
-            }
+    protected suspend fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
+        if (!isConnected)
+            return
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)
+        mCoroutineScope.launch {
+            mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
         }
     }
 }

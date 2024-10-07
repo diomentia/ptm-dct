@@ -1,8 +1,8 @@
 package space.diomentia.ptm_dct
 
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -22,4 +22,15 @@ fun CoroutineScope.runQueue(queue: Channel<Job>) = launch {
 fun CoroutineScope.cancelWithQueue(queue: Channel<Job>) {
     queue.cancel()
     cancel()
+}
+
+@OptIn(InternalCoroutinesApi::class)
+suspend fun Job.await() {
+    val kite = Channel<Unit>(Channel.RENDEZVOUS)
+    this.invokeOnCompletion(onCancelling = true) {
+        kite.trySend(Unit)
+    }
+    if (!isCompleted && !isCancelled) {
+        kite.receive()
+    }
 }

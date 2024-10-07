@@ -2,17 +2,13 @@ package space.diomentia.ptm_dct.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -24,14 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PtmTopBar(
-    title: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    navigation: @Composable () -> Unit = {},
+    title: (@Composable () -> Unit)? = null,
+    navigation: (@Composable () -> Unit)? = null,
     actions: (@Composable () -> Unit)? = null,
 ) {
     var currentHeight by remember { mutableStateOf(0.dp) }
@@ -56,25 +51,31 @@ fun PtmTopBar(
             lineTo(-size.height / 3f, size.height)
             lineTo(0f, 0f)
         }
-        Surface(
-            modifier = Modifier.defaultMinSize(minHeight = currentHeight),
-            shape = slanted,
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(12.dp)
+        if (title != null || navigation != null) {
+            Surface(
+                modifier = Modifier.defaultMinSize(minHeight = currentHeight),
+                shape = slanted,
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Box {
-                    navigation()
-                }
-                Box(Modifier.padding(8.dp)) {
-                    ProvideTextStyle(MaterialTheme.typography.headlineMedium) {
-                        title()
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(12.dp)
+                ) {
+                    navigation?.let {
+                        Box {
+                            it()
+                        }
+                    }
+                    title?.let {
+                        Box(Modifier.padding(8.dp)) {
+                            ProvideTextStyle(MaterialTheme.typography.headlineMedium) {
+                                it()
+                            }
+                        }
                     }
                 }
             }
