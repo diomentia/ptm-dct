@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +20,7 @@ import androidx.compose.material.icons.filled.Battery0Bar
 import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -101,18 +101,15 @@ class MeasurementsActivity : ComponentActivity() {
                                             contentDescription = stringResource(R.string.back)
                                         )
                                     }
+                                },
+                                actions = {
+                                    StatusBar()
                                 }
                             )
                         },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                        ) {
-                            Contents()
-                        }
+                        Contents(modifier = Modifier.padding(innerPadding))
                     }
                 }
             }
@@ -138,7 +135,9 @@ class MeasurementsActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Contents() {
+private fun Contents(
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
@@ -168,34 +167,12 @@ private fun Contents() {
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .then(modifier),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         DownArrowContainer {
             Column {
-                Surface(
-                    modifier = Modifier.fillMaxWidth().wrapContentSize(),
-                    shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            when (gatt.batteryLevel) {
-                                in 75..100 -> Icons.Default.BatteryFull
-                                in 50 until 75 -> Icons.Default.Battery5Bar
-                                in 25 until 50 -> Icons.Default.Battery2Bar
-                                else -> Icons.Default.Battery0Bar
-                            },
-                            contentDescription = stringResource(R.string.current_charge)
-                        )
-                        Text("${gatt.batteryLevel}%", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
                 Text("Auth:\n${gatt.authInfo}\n")
                 Text("Status:\n${gatt.statusInfo}\n")
                 Text("Current Setup:\n${gatt.setupInfo}\n")
@@ -236,6 +213,39 @@ private fun Contents() {
             style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center,
 
+        )
+    }
+}
+
+@Composable
+fun StatusBar(
+    modifier: Modifier = Modifier
+) {
+    /*
+    Surface(
+        shape = RoundedCornerShape(100),
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+    ) {}
+     */
+    val gatt = LocalGattConnection.current
+    Row(
+        modifier = Modifier
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            when (gatt?.batteryLevel) {
+                in 75..100 -> Icons.Default.BatteryFull
+                in 50 until 75 -> Icons.Default.Battery5Bar
+                in 25 until 50 -> Icons.Default.Battery2Bar
+                else -> Icons.Default.Battery0Bar
+            },
+            contentDescription = stringResource(R.string.current_charge)
+        )
+        Text(
+            "%.1fV".format(gatt?.statusInfo?.battery ?: 0f),
+            style = MaterialTheme.typography.labelMedium
         )
     }
 }
