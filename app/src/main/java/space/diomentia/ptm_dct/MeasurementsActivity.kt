@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -64,6 +65,8 @@ import space.diomentia.ptm_dct.ui.theme.blue_mirage
 import java.io.Serializable
 import java.text.DecimalFormatSymbols
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class MeasurementsActivity : ComponentActivity() {
     private lateinit var mDevice: BluetoothDevice
@@ -216,6 +219,17 @@ private fun Contents(
                 style = MaterialTheme.typography.titleMedium
             )
         }
+        Text(
+            "Serial: ${gatt.authInfo?.serialNumber}, " +
+                "Ver: ${gatt.authInfo?.firmwareVersion}, " +
+                "manufactured: ${gatt.authInfo?.dateOfManufacture?.format(
+                    DateTimeFormatter.ISO_LOCAL_DATE
+                )}",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .alpha(.5f)
+                .padding(top = 16.dp)
+        )
     }
 
     if (!gatt.isConnected) {
