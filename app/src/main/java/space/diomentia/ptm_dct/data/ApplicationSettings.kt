@@ -2,7 +2,9 @@ package space.diomentia.ptm_dct.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.preference.PreferenceManager
+import java.io.File
 import java.security.MessageDigest
 
 
@@ -44,6 +46,7 @@ class PasswordHash(val hash: String) {
 
 object ApplicationSettings {
     const val keyPasswordAdmin = "password_admin"
+    const val keyDemoPasport = "demo_passport"
 
     lateinit var sharedPreferences: SharedPreferences
 
@@ -55,6 +58,17 @@ object ApplicationSettings {
             }
             with(sharedPreferences.edit()) {
                 putString(keyPasswordAdmin, value.hash)
+                apply()
+            }
+        }
+
+    var demoPassport: Uri?
+        get() = sharedPreferences.getString(keyDemoPasport, null)?.let {
+            Uri.parse(it)
+        }
+        set(uri) {
+            with(sharedPreferences.edit()) {
+                putString(keyDemoPasport, uri.toString())
                 apply()
             }
         }

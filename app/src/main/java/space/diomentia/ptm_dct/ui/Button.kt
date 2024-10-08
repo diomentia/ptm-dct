@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import space.diomentia.ptm_dct.ui.theme.blue_oxford
@@ -70,6 +69,7 @@ fun PtmOutlinedButton(
 fun PtmFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colors = ButtonColors(
@@ -81,6 +81,7 @@ fun PtmFilledButton(
     FilledTonalButton(
         onClick,
         modifier = modifier,
+        enabled = enabled,
         shape = RectangleShape,
         colors = colors
     ) {

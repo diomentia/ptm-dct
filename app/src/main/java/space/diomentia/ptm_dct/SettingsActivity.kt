@@ -1,12 +1,16 @@
 package space.diomentia.ptm_dct
 
+import android.content.ContentResolver
+import android.content.Intent
+import android.content.UriPermission
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -22,8 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +35,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.ApplicationSettings
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.PasswordHash
@@ -48,10 +52,10 @@ import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.ui.BorderedDialogContainer
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
-import space.diomentia.ptm_dct.ui.makeSnackbarMessage
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
+import java.io.File
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,14 +95,16 @@ class SettingsActivity : ComponentActivity() {
                         },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
+                        val coroutineScope = rememberCoroutineScope()
                         val colors = ListItemDefaults.colors(
                             containerColor = MaterialTheme.colorScheme.background
                         )
                         var showChangePasswordDialog by remember { mutableStateOf(false) }
                         if (showChangePasswordDialog) {
-                            ChangePasswordDialog(onDismissRequest = { showChangePasswordDialog = false })
+                            ChangePasswordDialog(onDismissRequest = {
+                                showChangePasswordDialog = false
+                            })
                         }
-                        val accessSnackbar = makeSnackbarMessage(stringResource(R.string.access_denied))
                         Column(
                             modifier = Modifier.padding(innerPadding)
                         ) {
@@ -109,8 +115,28 @@ class SettingsActivity : ComponentActivity() {
                                 if (Session.userLevel >= Session.AccessLevel.Admin) {
                                     showChangePasswordDialog = true
                                 } else {
-                                    accessSnackbar()
+                                    coroutineScope.launch {
+                                        snackbarHostState.currentSnackbarData?.dismiss()
+                                        snackbarHostState.showSnackbar(
+                                            applicationContext.getString(R.string.access_denied)
+                                        )
+                                    }
                                 }
+                            }
+
+                            val demoPassportLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.OpenDocument()
+                            ) { uri ->
+                                if (uri == null)
+                                    return@rememberLauncherForActivityResult
+                                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                ApplicationSettings.demoPassport = uri
+                            }
+                            SettingsMenuLink(
+                                title = { Text(stringResource(R.string.choose_demo_passport)) },
+                                colors = colors
+                            ) {
+                                demoPassportLauncher.launch(arrayOf("application/pdf"))
                             }
                         }
                     }
