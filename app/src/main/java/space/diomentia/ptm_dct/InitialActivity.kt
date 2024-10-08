@@ -18,10 +18,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,8 +29,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -62,6 +63,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -74,7 +76,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
@@ -127,13 +128,11 @@ class InitialActivity : ComponentActivity() {
                         ) },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Box(
+                        Contents(
                             Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                        ) {
-                            Contents()
-                        }
+                        )
                     }
                 }
             }
@@ -145,46 +144,49 @@ class InitialActivity : ComponentActivity() {
 private fun Contents(
     modifier: Modifier = Modifier
 ) {
-    var currentStep by LocalStep.current
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .padding(horizontal = 16.dp)
             .then(modifier),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(Modifier.height(16.dp))
         SideArrowContainer(
-            modifier = Modifier
-                .padding(vertical = 8.dp),
             toRight = false,
-            slantFactor = 4
+            slantFactor = 4,
+            modifier = Modifier
+                .weight(2f)
+                .heightIn(min = 64.dp, max = 175.dp)
         ) {
             Image(
                 painter = painterResource(R.drawable.logo_ptm),
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
-                    .padding(24.dp)
-                    .heightIn(min = 64.dp, max = 175.dp)
+                    .padding(20.dp)
                     .fillMaxSize()
             )
         }
+        Spacer(Modifier.height(16.dp))
         StepHelper(
             Modifier
-                .weight(1f)
+                .weight(2f)
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
         )
+        Spacer(Modifier.height(8.dp))
         // TODO: segmented button USB/Bluetooth
-        PasswordField(Modifier.padding(8.dp))
+        PasswordField()
+        Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier
-                .padding(vertical = 8.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .weight(1f),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ScanRfidButton()
             BluetoothPairingButton()
         }
+        Spacer(Modifier.height(12.dp))
     }
 }
 
@@ -215,6 +217,7 @@ private fun StepHelper(
     modifier: Modifier = Modifier
 ) {
     data class StepHint(val hintResource: Int, val step: Step, val isMain: Boolean = false)
+
     val stepHints = remember {
         arrayOf(
             StepHint(R.string.input_password, Step.Password, true),
@@ -226,7 +229,7 @@ private fun StepHelper(
         )
     }
     Column(
-        modifier,
+        Modifier.then(modifier),
         horizontalAlignment = Alignment.Start
     ) {
         var mainIndex = 0
@@ -243,7 +246,7 @@ private fun StepHelper(
                 label = hint.hintResource.toString()
             )
             val fontSize = animateIntAsState(
-                if (hint.isMain && stepState == 0) 18 else 14,
+                if (hint.isMain && stepState == 0) 18 else 12,
                 label = hint.hintResource.toString()
             )
             AnimatedVisibility(
@@ -271,6 +274,7 @@ private fun PasswordField(
     val context = LocalContext.current
     var currentStep by LocalStep.current
     var passwordVisible by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
     LaunchedEffect(passwordVisible) {
         if (passwordVisible) {
             delay(3000)
@@ -281,19 +285,51 @@ private fun PasswordField(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(IntrinsicSize.Min)
-            .padding(vertical = 16.dp)
+            .then(modifier)
     ) {
         var passwordInput by remember { mutableStateOf("") }
+        fun applyPassword() {
+            Session.updateUserLevel(passwordInput)
+            if (currentStep >= Step.Password) {
+                if (passwordInput.isBlank()) {
+                    currentStep = Step.Password
+                } else if (Session.userLevel == Session.AccessLevel.Guest) {
+                    currentStep = Step.UserLevel
+                } else if (currentStep in arrayOf(Step.Password, Step.UserLevel)) {
+                    currentStep = currentStep.next()
+                }
+            }
+            passwordInput = ""
+            focusManager.clearFocus()
+        }
         TextField(
-            singleLine = true,
+            value = passwordInput,
+            onValueChange = { passwordInput = it },
             modifier = Modifier
                 .weight(1f)
-                .then(modifier),
-            label = { Text(stringResource(R.string.password)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                .height(IntrinsicSize.Min),
+            singleLine = true,
+            label = { Text(
+                stringResource(R.string.password),
+                style = LocalTextStyle.current.let { it.copy(fontSize = it.fontSize * .8f) }
+            ) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    applyPassword()
+                }
+            ),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             leadingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                IconButton(
+                    onClick = { passwordVisible = !passwordVisible },
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .fillMaxHeight()
+                ) {
                     Icon(
                         if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                         contentDescription = context.getString(
@@ -302,29 +338,16 @@ private fun PasswordField(
                         modifier = Modifier.padding(8.dp)
                     )
                 }
-            },
-            value = passwordInput,
-            onValueChange = { passwordInput = it }
+            }
+
         )
-        val focusManager = LocalFocusManager.current
         FilledIconButton(
             modifier = Modifier
                 .fillMaxHeight()
                 .aspectRatio(1f)
                 .padding(12.dp),
             onClick = {
-                Session.updateUserLevel(passwordInput)
-                if (currentStep >= Step.Password) {
-                    if (passwordInput.isBlank()) {
-                        currentStep = Step.Password
-                    } else if (Session.userLevel == Session.AccessLevel.Guest) {
-                        currentStep = Step.UserLevel
-                    } else if (currentStep in arrayOf(Step.Password, Step.UserLevel)) {
-                        currentStep = currentStep.next()
-                    }
-                }
-                passwordInput = ""
-                focusManager.clearFocus()
+                applyPassword()
             },
             shape = RoundedCornerShape(20)
         ) {
@@ -395,13 +418,14 @@ private fun ScanRfidButton(
                 }
                 showDialog = true
             }
+            .aspectRatio(1f)
             .then(modifier)
     ) {
         Icon(
             Icons.Default.Nfc,
             contentDescription = stringResource(R.string.button_start_rfid_search),
             modifier = Modifier
-                .requiredSize(64.dp)
+                .fillMaxSize()
         )
     }
 }
@@ -471,13 +495,14 @@ private fun BluetoothPairingButton(
                 }
                 btConnectLauncher.launch(Intent(context, PairingActivity::class.java))
             }
+            .aspectRatio(1f)
             .then(modifier)
     ) {
         Icon(
             Icons.Default.Bluetooth,
             contentDescription = stringResource(R.string.button_bluetooth_pairing),
             modifier = Modifier
-                .requiredSize(64.dp)
+                .fillMaxSize()
         )
     }
 }

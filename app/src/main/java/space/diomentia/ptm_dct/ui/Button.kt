@@ -41,7 +41,6 @@ fun PtmOutlinedButton(
     roundedCorners: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val density = LocalDensity.current
     val buttonShape: Shape = RoundedCornerShape(if (roundedCorners) 25 else 0)
     var buttonMinSize by remember { mutableStateOf(0.dp) }
     val contentColor by animateColorAsState(if (enabled) colors.contentColor else colors.disabledContentColor)

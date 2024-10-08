@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -142,12 +143,13 @@ class PairingActivity : ComponentActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = { PtmTopBar(
-                            title = { Text(stringResource(R.string.connection)) },
                             navigation = {
-                                IconButton(onClick = {
-                                    setResult(RESULT_CANCELED)
-                                    finish()
-                                }) {
+                                IconButton(
+                                    onClick = {
+                                        setResult(RESULT_CANCELED)
+                                        finish()
+                                    }
+                                ) {
                                     Icon(
                                         Icons.AutoMirrored.Default.ArrowBack,
                                         modifier = Modifier
@@ -177,7 +179,7 @@ class PairingActivity : ComponentActivity() {
                                         if (mIsDiscovering) Icons.Default.Refresh else Icons.Default.Search,
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(6.dp),
+                                            .padding(4.dp),
                                         contentDescription = stringResource(if (mIsDiscovering) R.string.refresh else R.string.start_search)
                                     )
                                 }
