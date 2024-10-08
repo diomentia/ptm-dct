@@ -46,6 +46,7 @@ import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.PasswordHash
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.ui.BorderedDialogContainer
+import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.makeSnackbarMessage
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
@@ -88,20 +89,7 @@ class SettingsActivity : ComponentActivity() {
                                 }
                             )
                         },
-                        snackbarHost = { SnackbarHost(snackbarHostState) {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            Snackbar(
-                                it,
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.clickable(
-                                    interactionSource = interactionSource,
-                                    indication = null
-                                ) {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                }
-                            )
-                        } }
+                        snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
                         val colors = ListItemDefaults.colors(
                             containerColor = MaterialTheme.colorScheme.background

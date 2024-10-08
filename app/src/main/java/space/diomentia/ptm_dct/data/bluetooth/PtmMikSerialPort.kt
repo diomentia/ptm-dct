@@ -176,7 +176,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                             }
                         } == false) {
                         repeat(entryNumber) { reader() }
-                        reader()
+                        reader { false }
                     } else {
                         while (reader { !it.contains("EndJournal") } == true) {
                         }
