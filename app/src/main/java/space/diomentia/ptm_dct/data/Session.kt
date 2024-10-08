@@ -3,6 +3,7 @@ package space.diomentia.ptm_dct.data
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import space.diomentia.ptm_dct.data.bluetooth.MikState
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 
 object Session {
@@ -27,7 +28,7 @@ object Session {
         userLevel = AccessLevel.checkPasswordLevel(password)
     }
 
-    var serialPortConnection: PtmMikSerialPort? = null
+    var mikState: MikState? = null
 
     var userLevel by mutableStateOf(AccessLevel.Guest)
         private set

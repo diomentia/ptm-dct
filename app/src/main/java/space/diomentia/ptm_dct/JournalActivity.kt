@@ -33,8 +33,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import space.diomentia.ptm_dct.data.LocalGattConnection
+import space.diomentia.ptm_dct.data.LocalMikState
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.Session
+import space.diomentia.ptm_dct.data.bluetooth.MikState
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
@@ -52,7 +54,7 @@ class JournalActivity : ComponentActivity() {
             PtmTheme {
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
-                    LocalGattConnection provides Session.serialPortConnection
+                    LocalMikState provides (Session.mikState ?: MikState())
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -92,7 +94,7 @@ private fun Contents(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val gatt = LocalGattConnection.current
+    val mik = LocalMikState.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -104,7 +106,7 @@ private fun Contents(
     ) {
         item { Spacer(Modifier.height(padding.calculateTopPadding() + 16.dp)) }
 
-        gatt?.journal?.fastForEachIndexed { i, entry ->
+        mik.journal.fastForEachIndexed { i, entry ->
             item {
                 if (i > 0) {
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))

@@ -5,8 +5,6 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
 import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
@@ -69,21 +67,18 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         val CHAR_WRITE: UUID = UUID.fromString("0000FFF2-0000-1000-8000-00805f9b34fb")
     }
 
+    val mikState = MikState()
 
-    var batteryLevel by mutableIntStateOf(0)
-        private set
-    var authInfo by mutableStateOf<MikAuth?>(null)
-        private set
-    var statusInfo by mutableStateOf<MikStatus?>(null)
-        private set
-    var setupInfo by mutableStateOf<String?>(null)
     var hasLastCommandSucceeded by mutableStateOf<Pair<Command?, Boolean>>(null to true)
-        private set
-    val journal = mutableStateListOf<MikJournalEntry>()
 
     private val readData = Channel<String>(Channel.UNLIMITED)
-
     private var updater: Job? = null
+    override var isConnected: Boolean
+        get() = super.isConnected
+        set(value) {
+            super.isConnected = value
+            mikState.isConnected = value
+        }
 
     override fun connect() {
         super.connect()
@@ -108,7 +103,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             SERVICE_BATTERY -> {
                 when (characteristic.uuid) {
                     CHAR_BATTERY_LEVEL ->
-                        batteryLevel = buffer.getInt(MTU - Int.SIZE_BYTES)
+                        mikState.batteryLevel = buffer.getInt(MTU - Int.SIZE_BYTES)
                 }
             }
         }
@@ -124,13 +119,13 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
     ) {
         hasLastCommandSucceeded = command to when (command) {
             Command.Connection -> throw IllegalStateException()
-            Command.Authentication -> MikAuth.parse(value)?.also { authInfo = it } != null
-            Command.GetStatus -> MikStatus.parse(value)?.also { statusInfo = it } != null
+            Command.Authentication -> MikAuth.parse(value)?.also { mikState.authInfo = it } != null
+            Command.GetStatus -> MikStatus.parse(value)?.also { mikState.statusInfo = it } != null
             Command.GetSetup -> {
-                setupInfo = value; true
+                mikState.setupInfo = value; true
             }
 
-            Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
+            Command.GetJournal -> MikJournalEntry.parse(value)?.also { mikState.journal.add(it) } != null
             Command.SetDateTime, Command.Setup, Command.ClearJournal -> value
                 .trim()
                 .lowercase() == "ok"
@@ -144,7 +139,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     fun sendCommand(command: Command, vararg args: String): Job {
         when (command) {
-            Command.GetJournal -> journal.clear()
+            Command.GetJournal -> mikState.journal.clear()
             else -> Unit
         }
         return mCoroutineScope.queueJob(mJobQueue) {

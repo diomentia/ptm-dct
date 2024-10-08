@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.blegattcoroutines.core)
     implementation(libs.blegattcoroutines.genericaccess)
     implementation(libs.androidx.animation.graphics)
+    implementation(libs.poi)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

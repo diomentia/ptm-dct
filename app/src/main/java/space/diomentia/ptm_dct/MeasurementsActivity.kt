@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.core.content.IntentCompat
+import androidx.lifecycle.ReportFragment.Companion.reportFragment
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -63,14 +64,13 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
-import java.io.Serializable
 import java.text.DecimalFormatSymbols
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 class MeasurementsActivity : ComponentActivity() {
     private lateinit var mDevice: BluetoothDevice
+    private var mSerialPort by mutableStateOf<PtmMikSerialPort?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +86,7 @@ class MeasurementsActivity : ComponentActivity() {
             PtmTheme {
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
-                    LocalGattConnection provides Session.serialPortConnection
+                    LocalGattConnection provides mSerialPort
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -122,18 +122,19 @@ class MeasurementsActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (Session.serialPortConnection == null) {
-            Session.serialPortConnection = PtmMikSerialPort(mDevice)
+        if (mSerialPort == null) {
+            mSerialPort = PtmMikSerialPort(mDevice)
+            Session.mikState = mSerialPort?.mikState
         }
-        Session.serialPortConnection?.let {
+        mSerialPort?.let {
             if (!it.isConnected) it.connect()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Session.serialPortConnection?.cancel()
-        Session.serialPortConnection = null
+        mSerialPort?.cancel()
+        mSerialPort = null
     }
 }
 
@@ -217,9 +218,9 @@ private fun Contents(
             )
         }
         Text(
-            "Serial: ${gatt.authInfo?.serialNumber}, " +
-                "Ver: ${gatt.authInfo?.firmwareVersion}, " +
-                "manufactured: ${gatt.authInfo?.dateOfManufacture?.format(
+            "Serial: ${gatt.mikState.authInfo?.serialNumber}, " +
+                "Ver: ${gatt.mikState.authInfo?.firmwareVersion}, " +
+                "manufactured: ${gatt.mikState.authInfo?.dateOfManufacture?.format(
                     DateTimeFormatter.ISO_LOCAL_DATE
                 )}",
             style = MaterialTheme.typography.labelSmall,
@@ -267,7 +268,7 @@ private fun StatusBar(
             contentDescription = stringResource(R.string.current_charge)
         )
         Text(
-            "%.1fV".format(gatt?.statusInfo?.battery ?: 0f),
+            "%.1fV".format(gatt?.mikState?.statusInfo?.battery ?: 0f),
             style = MaterialTheme.typography.labelMedium
         )
 
@@ -276,7 +277,7 @@ private fun StatusBar(
             contentDescription = stringResource(R.string.current_temperature)
         )
         Text(
-            "${gatt?.statusInfo?.controllerTemperature ?: 0}°",
+            "${gatt?.mikState?.statusInfo?.controllerTemperature ?: 0}°",
             style = MaterialTheme.typography.labelMedium
         )
     }
@@ -353,14 +354,14 @@ private fun VoltageGrid(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            VoltageCell(1, gatt?.statusInfo?.voltage?.getOrNull(0))
-            VoltageCell(2, gatt?.statusInfo?.voltage?.getOrNull(1))
+            VoltageCell(1, gatt?.mikState?.statusInfo?.voltage?.getOrNull(0))
+            VoltageCell(2, gatt?.mikState?.statusInfo?.voltage?.getOrNull(1))
         }
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            VoltageCell(3, gatt?.statusInfo?.voltage?.getOrNull(2))
-            VoltageCell(4, gatt?.statusInfo?.voltage?.getOrNull(3))
+            VoltageCell(3, gatt?.mikState?.statusInfo?.voltage?.getOrNull(2))
+            VoltageCell(4, gatt?.mikState?.statusInfo?.voltage?.getOrNull(3))
         }
     }
 }

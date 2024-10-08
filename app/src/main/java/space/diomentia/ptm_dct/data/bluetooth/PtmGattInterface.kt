@@ -55,7 +55,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
 
     protected var mGatt: GattConnection = GattConnection(device)
 
-    var isConnected by mutableStateOf(mGatt.isConnected)
+    open var isConnected = mGatt.isConnected
         protected set
 
     init {
