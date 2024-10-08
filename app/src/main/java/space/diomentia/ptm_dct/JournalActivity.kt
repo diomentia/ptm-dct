@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -25,14 +26,15 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.IntentCompat
+import androidx.compose.ui.util.fastForEachIndexed
+import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
@@ -42,29 +44,15 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class JournalActivity : ComponentActivity() {
-    companion object {
-        const val EXTRA_JOURNAL = "journal"
-
-        val LocalJournal = staticCompositionLocalOf<Array<MikJournalEntry>> { arrayOf() }
-    }
-
-    private lateinit var mJournal: Array<MikJournalEntry>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mJournal = IntentCompat
-            .getSerializableExtra(
-                intent,
-                EXTRA_JOURNAL,
-                Array<MikJournalEntry>::class.java
-            )!!
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {
             PtmTheme {
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
-                    LocalJournal provides mJournal
+                    LocalGattConnection provides Session.serialPortConnection
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -104,20 +92,23 @@ private fun Contents(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val journal = JournalActivity.LocalJournal.current
+    val gatt = LocalGattConnection.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(
-                start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                end = padding.calculateEndPadding(LocalLayoutDirection.current)
+                start = padding.calculateStartPadding(LocalLayoutDirection.current) + 8.dp,
+                end = padding.calculateEndPadding(LocalLayoutDirection.current) + 8.dp
             )
             .then(modifier)
     ) {
-        item { Spacer(Modifier.height(padding.calculateTopPadding())) }
+        item { Spacer(Modifier.height(padding.calculateTopPadding() + 16.dp)) }
 
-        journal.forEachIndexed { i, entry ->
+        gatt?.journal?.fastForEachIndexed { i, entry ->
             item {
+                if (i > 0) {
+                    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                }
                 JournalListEntry(i + 1, entry, Modifier.fillMaxWidth())
             }
         }
@@ -135,7 +126,8 @@ private fun JournalListEntry(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(16.dp)
+            .padding(8.dp)
+            .then(modifier)
     ) {
         Text(
             "$index.",

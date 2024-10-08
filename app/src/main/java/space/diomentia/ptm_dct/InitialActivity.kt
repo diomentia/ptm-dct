@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,7 +42,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -312,10 +309,7 @@ private fun PasswordField(
                 .weight(1f)
                 .height(IntrinsicSize.Min),
             singleLine = true,
-            label = { Text(
-                stringResource(R.string.password),
-                style = LocalTextStyle.current.let { it.copy(fontSize = it.fontSize * .8f) }
-            ) },
+            label = { Text(stringResource(R.string.password)) },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
@@ -330,7 +324,6 @@ private fun PasswordField(
                 IconButton(
                     onClick = { passwordVisible = !passwordVisible },
                     modifier = Modifier
-                        .padding(horizontal = 4.dp)
                         .fillMaxHeight()
                 ) {
                     Icon(
@@ -338,7 +331,9 @@ private fun PasswordField(
                         contentDescription = context.getString(
                             if (passwordVisible) R.string.hide_password else R.string.show_password
                         ),
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
                     )
                 }
             }

@@ -54,6 +54,7 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
+import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
 import space.diomentia.ptm_dct.ui.DownArrowContainer
 import space.diomentia.ptm_dct.ui.PtmFilledButton
@@ -70,7 +71,6 @@ import java.time.format.FormatStyle
 
 class MeasurementsActivity : ComponentActivity() {
     private lateinit var mDevice: BluetoothDevice
-    private var mGattConnection by mutableStateOf<PtmMikSerialPort?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,14 +80,13 @@ class MeasurementsActivity : ComponentActivity() {
                 PairingActivity.EXTRA_CONNECTED_DEVICE,
                 BluetoothDevice::class.java
             )!!
-        mGattConnection = PtmMikSerialPort(mDevice)
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {
             PtmTheme {
                 CompositionLocalProvider(
                     LocalSnackbarHostState provides snackbarHostState,
-                    LocalGattConnection provides mGattConnection
+                    LocalGattConnection provides Session.serialPortConnection
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -123,18 +122,18 @@ class MeasurementsActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (mGattConnection == null) {
-            mGattConnection = PtmMikSerialPort(mDevice)
+        if (Session.serialPortConnection == null) {
+            Session.serialPortConnection = PtmMikSerialPort(mDevice)
         }
-        if (mGattConnection?.isConnected == false) {
-            mGattConnection?.connect()
+        Session.serialPortConnection?.let {
+            if (!it.isConnected) it.connect()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mGattConnection?.cancel()
-        mGattConnection = null
+        Session.serialPortConnection?.cancel()
+        Session.serialPortConnection = null
     }
 }
 
@@ -183,9 +182,7 @@ private fun Contents(
         PtmFilledButton(
             {
                 context.startActivity(
-                    Intent(context, JournalActivity::class.java).apply {
-                        putExtra(JournalActivity.EXTRA_JOURNAL, gatt.journal.toTypedArray() as Serializable)
-                    }
+                    Intent(context, JournalActivity::class.java)
                 )
             },
             modifier = Modifier
