@@ -53,10 +53,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
     )
     protected val mCoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    protected var mGatt: GattConnection = GattConnection(
-        device,
-        connectionSettings = GattConnection.ConnectionSettings(autoConnect = true)
-    )
+    protected var mGatt: GattConnection = GattConnection(device)
 
     var isConnected by mutableStateOf(mGatt.isConnected)
         protected set
@@ -78,17 +75,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             if (!mGatt.isConnected) {
                 mGatt.connect()
                 mGatt.discoverServices()
-                while (!mGatt.isConnected) { delay(50L) }
                 isConnected = true
-            }
-        }
-    }
-
-    fun disconnect() {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (mGatt.isConnected) {
-                mGatt.disconnect()
-                isConnected = false
             }
         }
     }
@@ -105,7 +92,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
     )
 
     protected suspend fun readCharacteristic(service: UUID, characteristic: UUID) {
-        if (!isConnected)
+        if (!mGatt.isConnected)
             return
         val char =
             mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
@@ -118,7 +105,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
         characteristic: UUID,
         value: ByteArray
     ) {
-        if (!isConnected)
+        if (!mGatt.isConnected)
             return
         val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
         char.value = value
@@ -126,7 +113,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
     }
 
     protected suspend fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
-        if (!isConnected)
+        if (!mGatt.isConnected)
             return
         val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
         mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)

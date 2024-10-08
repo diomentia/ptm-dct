@@ -131,7 +131,8 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             }
 
             Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
-            Command.SetDateTime, Command.Setup, Command.ClearJournal -> value.trim().lowercase() == "ok"
+            Command.SetDateTime, Command.Setup, Command.ClearJournal -> value.trim()
+                .lowercase() == "ok"
         }
         if (hasLastCommandSucceeded.second) {
             Log.i("MikCommand", "${command.name}: $value")
@@ -215,15 +216,10 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         }
     }
 
-    fun setDateTime(dt: LocalDateTime) {
-        sendCommand(
-            Command.SetDateTime,
-            dt.format(
-                DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss")
-            )
-        )
-        println(dt.format(
+    fun setDateTime(dt: LocalDateTime) = sendCommand(
+        Command.SetDateTime,
+        dt.format(
             DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm:ss")
-        ))
-    }
+        )
+    )
 }
