@@ -124,14 +124,15 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
     ) {
         hasLastCommandSucceeded = command to when (command) {
             Command.Connection -> throw IllegalStateException()
-            Command.Authentication -> MikAuth.parse(value).also { authInfo = it } != null
-            Command.GetStatus -> MikStatus.parse(value).also { statusInfo = it } != null
+            Command.Authentication -> MikAuth.parse(value)?.also { authInfo = it } != null
+            Command.GetStatus -> MikStatus.parse(value)?.also { statusInfo = it } != null
             Command.GetSetup -> {
                 setupInfo = value; true
             }
 
             Command.GetJournal -> MikJournalEntry.parse(value)?.also { journal.add(it) } != null
-            Command.SetDateTime, Command.Setup, Command.ClearJournal -> value.trim()
+            Command.SetDateTime, Command.Setup, Command.ClearJournal -> value
+                .trim()
                 .lowercase() == "ok"
         }
         if (hasLastCommandSucceeded.second) {
