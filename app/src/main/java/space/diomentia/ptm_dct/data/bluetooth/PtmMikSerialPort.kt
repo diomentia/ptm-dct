@@ -17,6 +17,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import space.diomentia.ptm_dct.await
 import space.diomentia.ptm_dct.data.mik.MikAuth
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
+import space.diomentia.ptm_dct.data.mik.MikState
 import space.diomentia.ptm_dct.data.mik.MikStatus
 import space.diomentia.ptm_dct.queueJob
 import java.nio.ByteBuffer

@@ -19,7 +19,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -38,7 +37,7 @@ import androidx.compose.ui.util.fastForEachIndexed
 import space.diomentia.ptm_dct.data.LocalMikState
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.Session
-import space.diomentia.ptm_dct.data.bluetooth.MikState
+import space.diomentia.ptm_dct.data.mik.MikState
 import space.diomentia.ptm_dct.data.mik.MikJournalEntry
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar

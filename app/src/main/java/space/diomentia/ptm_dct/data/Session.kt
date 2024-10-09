@@ -3,8 +3,7 @@ package space.diomentia.ptm_dct.data
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import space.diomentia.ptm_dct.data.bluetooth.MikState
-import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
+import space.diomentia.ptm_dct.data.mik.MikState
 
 object Session {
     enum class Step {
