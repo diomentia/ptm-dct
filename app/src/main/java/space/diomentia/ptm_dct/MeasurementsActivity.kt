@@ -51,7 +51,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.core.content.IntentCompat
-import androidx.lifecycle.ReportFragment.Companion.reportFragment
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -158,6 +157,8 @@ private fun Contents(
     }
     if (!gatt.hasLastCommandSucceeded.second) {
         gatt.hasLastCommandSucceeded.first?.let {
+            if (it == PtmMikSerialPort.Command.GetStatus)
+                return@let
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(
                     context.resources

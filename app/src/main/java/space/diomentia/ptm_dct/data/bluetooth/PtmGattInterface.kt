@@ -42,6 +42,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
                     gatt.close()
                     return true
                 }
+                gatt.close()
             }
             return false
         }

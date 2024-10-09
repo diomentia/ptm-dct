@@ -244,9 +244,9 @@ private fun Contents(
             )
             .then(modifier)
     ) {
-        item {
-            Spacer(Modifier.requiredHeight(padding.calculateTopPadding()))
+        item { Spacer(Modifier.requiredHeight(padding.calculateTopPadding())) }
 
+        item {
             Text(
                 stringResource(R.string.found_devices),
                 style = MaterialTheme.typography.labelLarge,
@@ -315,7 +315,7 @@ private fun ConnectableDeviceItem(
             .background(if (isConnecting) blue_mirage else Color.Transparent)
             .wrapContentSize()
             .fillMaxWidth()
-            .padding(vertical = 24.dp, horizontal = 24.dp)
+            .padding(16.dp)
             .then(modifier)
     ) {
         Column {
