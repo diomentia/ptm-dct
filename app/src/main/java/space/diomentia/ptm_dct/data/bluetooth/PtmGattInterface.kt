@@ -34,7 +34,10 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
                 device.type == BluetoothDevice.DEVICE_TYPE_LE
                 || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
             ) {
-                val gatt = GattConnection(device)
+                val gatt = GattConnection(
+                    device,
+                    GattConnection.ConnectionSettings(autoConnect = true)
+                )
                 withTimeoutOrNull(MAX_PAIR_WAIT) {
                     gatt.connect()
                 }
@@ -76,6 +79,9 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             if (!mGatt.isConnected) {
                 mGatt.connect()
                 mGatt.discoverServices()
+                while (!mGatt.isConnected) {
+                    delay(50L)
+                }
                 isConnected = true
             }
         }

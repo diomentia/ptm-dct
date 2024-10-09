@@ -3,6 +3,7 @@ package space.diomentia.ptm_dct
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -79,6 +80,9 @@ class MeasurementsActivity : ComponentActivity() {
                 PairingActivity.EXTRA_CONNECTED_DEVICE,
                 BluetoothDevice::class.java
             )!!
+        mSerialPort = PtmMikSerialPort(mDevice).apply {
+            connect()
+        }
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {

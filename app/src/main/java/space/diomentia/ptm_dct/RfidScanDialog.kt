@@ -33,6 +33,10 @@ fun RfidScanDialog(
         RfidController.stopRead()
         onDismissRequest()
     }
+    val confirm = { tag: RfidController.RfidTag ->
+        RfidController.stopRead()
+        onConfirmation(tag)
+    }
     var currentTag by remember { mutableStateOf<RfidController.RfidTag?>(null) }
     Dialog(dismiss) {
         BorderedDialogContainer {
@@ -79,7 +83,7 @@ fun RfidScanDialog(
                     }
                     TextButton(
                         enabled = currentTag != null,
-                        onClick = { onConfirmation(currentTag!!) }) {
+                        onClick = { confirm(currentTag!!) }) {
                         Text(
                             stringResource(R.string.accept),
                             style = MaterialTheme.typography.labelLarge

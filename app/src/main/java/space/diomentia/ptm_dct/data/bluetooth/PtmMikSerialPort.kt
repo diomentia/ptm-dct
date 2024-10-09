@@ -58,8 +58,8 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     companion object {
         const val MTU = 440
-        const val MAX_READ_WAIT = 3000L
-        const val UPDATE_PERIOD = 200L
+        const val MAX_READ_WAIT = 7500L
+        const val UPDATE_PERIOD = 500L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         val CHAR_BATTERY_LEVEL: UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
