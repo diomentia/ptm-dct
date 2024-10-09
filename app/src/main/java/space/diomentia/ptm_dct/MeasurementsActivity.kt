@@ -80,9 +80,6 @@ class MeasurementsActivity : ComponentActivity() {
                 PairingActivity.EXTRA_CONNECTED_DEVICE,
                 BluetoothDevice::class.java
             )!!
-        mSerialPort = PtmMikSerialPort(mDevice).apply {
-            connect()
-        }
         setupEdgeToEdge(activity = this)
         val snackbarHostState = SnackbarHostState()
         setContent {
