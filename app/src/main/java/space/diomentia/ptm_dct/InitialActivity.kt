@@ -175,7 +175,13 @@ private fun Contents(
         )
         Spacer(Modifier.height(8.dp))
         // TODO: segmented button USB/Bluetooth
-        PasswordField()
+        var showPassword by remember { mutableStateOf(true) }
+        if (LocalStep.current.value > Step.UserLevel){
+            showPassword = false
+        }
+        AnimatedVisibility(showPassword) {
+            PasswordField()
+        }
         Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier

@@ -22,7 +22,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import space.diomentia.ptm_dct.data.RfidController
+import space.diomentia.ptm_dct.data.mik.demoKipData
 import space.diomentia.ptm_dct.ui.BorderedDialogContainer
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun RfidScanDialog(
@@ -50,7 +53,10 @@ fun RfidScanDialog(
                 ) {
                     val textPadding = Modifier.padding(8.dp)
                     val textStyle = MaterialTheme.typography.bodyMedium
-                    if (currentTag == null) {
+                    val kip = currentTag?.epc?.let { epc ->
+                        demoKipData[epc.substring(epc.length-4).lowercase()]
+                    }
+                    if (kip == null) {
                         Text(
                             stringResource(R.string.tag_not_found),
                             textPadding,
@@ -58,12 +64,37 @@ fun RfidScanDialog(
                         )
                     } else {
                         Text(
-                            "EPC: ${currentTag?.epc}",
+                            kip.kipName,
                             textPadding,
                             style = textStyle
                         )
                         Text(
-                            "Data: ${currentTag?.userData}",
+                            kip.organizationName,
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            kip.area,
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            kip.pipeline,
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            kip.anchorPoint.toString(),
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            kip.producer,
+                            textPadding,
+                            style = textStyle
+                        )
+                        Text(
+                            kip.commissioningDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                             textPadding,
                             style = textStyle
                         )

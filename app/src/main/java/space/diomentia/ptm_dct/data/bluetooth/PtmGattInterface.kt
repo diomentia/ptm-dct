@@ -24,13 +24,14 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
     companion object {
         const val MAX_PAIR_WAIT = 5000L
 
-        suspend fun isAccessible(
+        fun isAccessible(
             device: BluetoothDevice
         ): Boolean {
             if (
                 device.type == BluetoothDevice.DEVICE_TYPE_LE
                 || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
             ) {
+                /*
                 val gatt = GattConnection(
                     device,
                     GattConnection.ConnectionSettings(autoConnect = true)
@@ -39,10 +40,13 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
                     gatt.connect()
                 }
                 if (gatt.isConnected) {
+                    gatt.disconnect()
                     gatt.close()
                     return true
                 }
                 gatt.close()
+                 */
+                return true
             }
             return false
         }
