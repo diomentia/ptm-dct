@@ -76,9 +76,6 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             if (!mGatt.isConnected) {
                 mGatt.connect()
                 mGatt.discoverServices()
-                while (!mGatt.isConnected) {
-                    delay(50L)
-                }
                 isConnected = true
             }
         }

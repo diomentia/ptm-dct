@@ -58,8 +58,8 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
 
     companion object {
-        const val MTU = 440
-        const val MAX_READ_WAIT = 7500L
+        const val MTU = 512
+        const val MAX_READ_WAIT = 5000L
         const val UPDATE_PERIOD = 500L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
@@ -92,6 +92,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                 Log.e("MikConnection", ofe.toString())
             }
             toggleNotifications(SERVICE_DATA, CHAR_READ, true)
+            delay(2000L)
         }
         listenBatteryLevel()
     }
@@ -141,12 +142,16 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     fun sendCommand(command: Command, vararg args: String): Job {
         when (command) {
-            Command.GetJournal -> mikState.journal.clear()
+            Command.GetJournal -> {
+                mikState.endJournalReading = false
+                mikState.journal.clear()
+            }
             else -> Unit
         }
         return mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
+            if (!mGatt.isConnected) {
                 return@queueJob
+            }
             writeCharacteristic(
                 SERVICE_DATA,
                 CHAR_WRITE,
@@ -155,7 +160,6 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
                 withTimeoutOrNull(MAX_READ_WAIT) {
                     val data = readData.receive()
-                    delay(50L)
                     if (!dataValidation(data))
                         return@withTimeoutOrNull false
                     commandCallback(command, data)
@@ -174,12 +178,17 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                                 return@reader it == null
                             }
                         } == false) {
+                        Log.i(
+                            "MikCommand",
+                            "${Command.GetJournal}: number of entries = $entryNumber"
+                        )
                         repeat(entryNumber) { reader() }
                         reader { false }
                     } else {
                         while (reader { !it.contains("EndJournal") } == true) {
                         }
                     }
+                    mikState.endJournalReading = true
                 }
 
                 else -> reader()

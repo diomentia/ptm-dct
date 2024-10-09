@@ -13,7 +13,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -57,6 +59,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -75,7 +78,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
-import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
@@ -175,7 +177,15 @@ private fun Contents(
         )
         Spacer(Modifier.height(8.dp))
         // TODO: segmented button USB/Bluetooth
-        PasswordField()
+        val passwordFieldAlpha by animateFloatAsState(
+            if (LocalStep.current.value <= Step.UserLevel) 1f else 0f,
+            animationSpec = tween(durationMillis = 400, delayMillis = 100),
+            label = "password_field_alpha"
+        )
+        PasswordField(
+            Modifier
+                .alpha(passwordFieldAlpha)
+        )
         Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier
@@ -276,6 +286,9 @@ private fun PasswordField(
     var currentStep by LocalStep.current
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    if (Session.userLevel <= Session.AccessLevel.Guest) {
+        currentStep = Step.Password
+    }
     LaunchedEffect(passwordVisible) {
         if (passwordVisible) {
             delay(3000)
@@ -372,10 +385,10 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    if (currentStep == Step.RfidManager && RfidController.isAvailable ||
-        currentStep == Step.RfidTag && Session.rfidTag != null) {
+    // if (currentStep == Step.RfidManager && RfidController.isAvailable ||
+    //     currentStep == Step.RfidTag && Session.rfidTag != null) {
     // to test app without a device with RFID
-    // if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
+    if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
@@ -456,6 +469,12 @@ private fun BluetoothPairingButton(
     val btEnableLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {}
+    val mikSessionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        Session.rfidTag = null
+        Session.resetUserLevel()
+    }
     val btConnectLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -463,9 +482,10 @@ private fun BluetoothPairingButton(
             return@rememberLauncherForActivityResult
         }
         IntentCompat.getParcelableExtra(result.data!!, PairingActivity.EXTRA_CONNECTED_DEVICE, BluetoothDevice::class.java)?.let { device ->
-            Intent(context, MeasurementsActivity::class.java)
-                .putExtra(PairingActivity.EXTRA_CONNECTED_DEVICE, device)
-                .let { context.startActivity(it) }
+            mikSessionLauncher.launch(
+                Intent(context, MeasurementsActivity::class.java)
+                    .putExtra(PairingActivity.EXTRA_CONNECTED_DEVICE, device)
+            )
         }
     }
     PtmOutlinedButton(

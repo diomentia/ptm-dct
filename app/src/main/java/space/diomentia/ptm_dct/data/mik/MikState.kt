@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 @Stable
 class MikState {
     var isConnected by mutableStateOf(false)
+    var endJournalReading by mutableStateOf(false)
     var batteryLevel by mutableIntStateOf(0)
     var authInfo by mutableStateOf<MikAuth?>(null)
     var statusInfo by mutableStateOf<MikStatus?>(null)

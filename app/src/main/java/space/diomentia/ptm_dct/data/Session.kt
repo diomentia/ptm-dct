@@ -1,10 +1,12 @@
 package space.diomentia.ptm_dct.data
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import space.diomentia.ptm_dct.data.mik.MikState
 
+@Stable
 object Session {
     enum class Step {
         Password, UserLevel, RfidManager, RfidTag, BluetoothTurnOn, BluetoothPair;
@@ -25,6 +27,9 @@ object Session {
 
     fun updateUserLevel(password: String) {
         userLevel = AccessLevel.checkPasswordLevel(password)
+    }
+    fun resetUserLevel() {
+        userLevel = AccessLevel.Guest
     }
 
     var mikState: MikState? = null

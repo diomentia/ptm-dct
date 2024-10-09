@@ -3,9 +3,7 @@ package space.diomentia.ptm_dct
 import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -55,10 +53,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
-import org.apache.poi.ss.usermodel.Workbook
 import space.diomentia.ptm_dct.data.ApplicationSettings
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -72,7 +68,6 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_mirage
-import java.io.File
 import java.text.DecimalFormatSymbols
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -135,9 +130,7 @@ class MeasurementsActivity : ComponentActivity() {
             mSerialPort = PtmMikSerialPort(mDevice)
             Session.mikState = mSerialPort?.mikState
         }
-        mSerialPort?.let {
-            if (!it.isConnected) it.connect()
-        }
+        mSerialPort!!.connect()
     }
 
     override fun onDestroy() {
@@ -238,6 +231,9 @@ private fun Contents(
             context.contentResolver.openOutputStream(uri).let {
                 workbook.write(it)
             }
+            context as Activity
+            context.setResult(Activity.RESULT_OK)
+            context.finish()
         }
         PtmFilledButton(
             {
@@ -248,8 +244,8 @@ private fun Contents(
                         )
                     )}.xlsx"
                 )
-                (context as Activity).finish()
             },
+            enabled = gatt.mikState.endJournalReading,
             modifier = Modifier
                 .padding(4.dp)
                 .fillMaxWidth()
