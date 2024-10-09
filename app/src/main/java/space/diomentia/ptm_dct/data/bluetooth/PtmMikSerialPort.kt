@@ -155,6 +155,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
             suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
                 withTimeoutOrNull(MAX_READ_WAIT) {
                     val data = readData.receive()
+                    delay(50L)
                     if (!dataValidation(data))
                         return@withTimeoutOrNull false
                     commandCallback(command, data)

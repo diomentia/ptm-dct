@@ -1,9 +1,6 @@
 package space.diomentia.ptm_dct
 
-import android.content.ContentResolver
 import android.content.Intent
-import android.content.UriPermission
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -55,7 +52,6 @@ import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
 import space.diomentia.ptm_dct.ui.theme.blue_zodiac
 import space.diomentia.ptm_dct.ui.theme.white
-import java.io.File
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

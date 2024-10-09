@@ -3,9 +3,6 @@ package space.diomentia.ptm_dct.data.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import com.beepiz.bluetooth.gattcoroutines.GattConnection
 import kotlinx.coroutines.CoroutineScope

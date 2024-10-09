@@ -1,12 +1,15 @@
 package space.diomentia.ptm_dct
 
+import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -55,11 +58,13 @@ import androidx.compose.ui.unit.em
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.launch
+import org.apache.poi.ss.usermodel.Workbook
 import space.diomentia.ptm_dct.data.ApplicationSettings
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.bluetooth.PtmMikSerialPort
+import space.diomentia.ptm_dct.data.exportJournalToExcel
 import space.diomentia.ptm_dct.ui.DownArrowContainer
 import space.diomentia.ptm_dct.ui.PtmFilledButton
 import space.diomentia.ptm_dct.ui.PtmSnackbarHost
@@ -223,9 +228,28 @@ private fun Contents(
                 style = MaterialTheme.typography.titleMedium
             )
         }
+        val reportLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/vnd")
+        ) { uri ->
+            if (uri == null)
+                return@rememberLauncherForActivityResult
+            val workbook = gatt.mikState.exportJournalToExcel(context)
+                ?: return@rememberLauncherForActivityResult
+            context.contentResolver.openOutputStream(uri).let {
+                workbook.write(it)
+            }
+        }
         PtmFilledButton(
-            {},
-            enabled = false,
+            {
+                reportLauncher.launch(
+                    "journal_${LocalDateTime.now().format(
+                        DateTimeFormatter.ofPattern(
+                            "yyyy-MM-dd_hhmmss"
+                        )
+                    )}.xlsx"
+                )
+                (context as Activity).finish()
+            },
             modifier = Modifier
                 .padding(4.dp)
                 .fillMaxWidth()
@@ -237,10 +261,12 @@ private fun Contents(
         }
         Text(
             "Serial: ${gatt.mikState.authInfo?.serialNumber}, " +
-                "Ver: ${gatt.mikState.authInfo?.firmwareVersion}, " +
-                "manufactured: ${gatt.mikState.authInfo?.dateOfManufacture?.format(
-                    DateTimeFormatter.ISO_LOCAL_DATE
-                )}",
+                    "Ver: ${gatt.mikState.authInfo?.firmwareVersion}, " +
+                    "manufactured: ${
+                        gatt.mikState.authInfo?.dateOfManufacture?.format(
+                            DateTimeFormatter.ISO_LOCAL_DATE
+                        )
+                    }",
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .alpha(.5f)
