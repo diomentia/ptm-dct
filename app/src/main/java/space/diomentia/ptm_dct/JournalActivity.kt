@@ -30,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import space.diomentia.ptm_dct.data.LocalMikState
@@ -41,6 +44,7 @@ import space.diomentia.ptm_dct.ui.PtmSnackbarHost
 import space.diomentia.ptm_dct.ui.PtmTopBar
 import space.diomentia.ptm_dct.ui.setupEdgeToEdge
 import space.diomentia.ptm_dct.ui.theme.PtmTheme
+import space.diomentia.ptm_dct.ui.theme.white
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -146,15 +150,23 @@ private fun JournalListEntry(
                 ),
                 style = MaterialTheme.typography.labelLarge
             )
-            Text(
-                journalEntry.voltage.joinToString { "%.2f".format(it) },
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                "${journalEntry.battery}V, ${journalEntry.controllerTemperature}°",
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalContentColor.current.copy(alpha = .5f)
-            )
+            Row {
+                Text(
+                    buildAnnotatedString {
+                        append(
+                            journalEntry
+                                .voltage
+                                .joinToString(separator = ", ") { "%.2fmV".format(it) }
+                        )
+                        withStyle(SpanStyle(color = white.copy(alpha = .5f))) {
+                            append(
+                                ", ${journalEntry.battery}V, ${journalEntry.controllerTemperature}°"
+                            )
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
