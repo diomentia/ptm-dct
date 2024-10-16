@@ -182,10 +182,7 @@ private fun Contents(
             animationSpec = tween(durationMillis = 400, delayMillis = 100),
             label = "password_field_alpha"
         )
-        PasswordField(
-            Modifier
-                .alpha(passwordFieldAlpha)
-        )
+        PasswordField()
         Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier
@@ -295,81 +292,83 @@ private fun PasswordField(
             passwordVisible = false
         }
     }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .height(IntrinsicSize.Min)
-            .then(modifier)
-    ) {
-        var passwordInput by remember { mutableStateOf("") }
-        fun applyPassword() {
-            Session.updateUserLevel(passwordInput)
-            if (currentStep >= Step.Password) {
-                if (passwordInput.isBlank()) {
-                    currentStep = Step.Password
-                } else if (Session.userLevel == Session.AccessLevel.Guest) {
-                    currentStep = Step.UserLevel
-                } else if (currentStep in arrayOf(Step.Password, Step.UserLevel)) {
-                    currentStep = currentStep.next()
-                }
-            }
-            passwordInput = ""
-            focusManager.clearFocus()
-        }
-        TextField(
-            value = passwordInput,
-            onValueChange = { passwordInput = it },
+    AnimatedVisibility(LocalStep.current.value <= Step.UserLevel) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .weight(1f)
-                .height(IntrinsicSize.Min),
-            singleLine = true,
-            label = { Text(stringResource(R.string.password)) },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    applyPassword()
-                }
-            ),
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            leadingIcon = {
-                IconButton(
-                    onClick = { passwordVisible = !passwordVisible },
-                    modifier = Modifier
-                        .fillMaxHeight()
-                ) {
-                    Icon(
-                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = context.getString(
-                            if (passwordVisible) R.string.hide_password else R.string.show_password
-                        ),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                    )
-                }
-            }
-
-        )
-        FilledIconButton(
-            modifier = Modifier
-                .fillMaxHeight()
-                .aspectRatio(1f)
-                .padding(12.dp),
-            onClick = {
-                applyPassword()
-            },
-            shape = RoundedCornerShape(20)
+                .height(IntrinsicSize.Min)
+                .then(modifier)
         ) {
-            Icon(
-                Icons.Default.Done,
-                contentDescription = stringResource(R.string.apply),
+            var passwordInput by remember { mutableStateOf("") }
+            fun applyPassword() {
+                Session.updateUserLevel(passwordInput)
+                if (currentStep >= Step.Password) {
+                    if (passwordInput.isBlank()) {
+                        currentStep = Step.Password
+                    } else if (Session.userLevel == Session.AccessLevel.Guest) {
+                        currentStep = Step.UserLevel
+                    } else if (currentStep in arrayOf(Step.Password, Step.UserLevel)) {
+                        currentStep = currentStep.next()
+                    }
+                }
+                passwordInput = ""
+                focusManager.clearFocus()
+            }
+            TextField(
+                value = passwordInput,
+                onValueChange = { passwordInput = it },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
+                    .weight(1f)
+                    .height(IntrinsicSize.Min),
+                singleLine = true,
+                label = { Text(stringResource(R.string.password)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        applyPassword()
+                    }
+                ),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                leadingIcon = {
+                    IconButton(
+                        onClick = { passwordVisible = !passwordVisible },
+                        modifier = Modifier
+                            .fillMaxHeight()
+                    ) {
+                        Icon(
+                            if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = context.getString(
+                                if (passwordVisible) R.string.hide_password else R.string.show_password
+                            ),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                        )
+                    }
+                }
+
             )
+            FilledIconButton(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .padding(12.dp),
+                onClick = {
+                    applyPassword()
+                },
+                shape = RoundedCornerShape(20)
+            ) {
+                Icon(
+                    Icons.Default.Done,
+                    contentDescription = stringResource(R.string.apply),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                )
+            }
         }
     }
     if (currentStep >= Step.UserLevel && Session.userLevel <= Session.AccessLevel.Guest) {
