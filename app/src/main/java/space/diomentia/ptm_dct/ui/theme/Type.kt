@@ -135,6 +135,11 @@ val MikTypography = Typography(
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 0.sp
     ),
+    headlineSmall = defaultTypo.headlineSmall.copy(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.sp
+    ),
     labelSmall = defaultTypo.labelSmall.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.SemiBold,

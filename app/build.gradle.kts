@@ -11,14 +11,13 @@ android {
         applicationId = "space.diomentia.ptm_dct"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.2.1"
+        versionCode = 6
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        versionNameSuffix = "-hotfix.1"
     }
 
     buildTypes {
@@ -69,6 +68,9 @@ dependencies {
     implementation(libs.blegattcoroutines.core)
     implementation(libs.blegattcoroutines.genericaccess)
     implementation(libs.androidx.animation.graphics)
+    implementation(files("libs/poishadow-all.jar"))
+    implementation(libs.androidx.ui.test.android)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -11,7 +11,6 @@ import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.core.content.IntentCompat
-import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.LocalBtAdapter
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -144,12 +143,13 @@ class PairingActivity : ComponentActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         topBar = { PtmTopBar(
-                            title = { Text(stringResource(R.string.connection)) },
                             navigation = {
-                                IconButton(onClick = {
-                                    setResult(RESULT_CANCELED)
-                                    finish()
-                                }) {
+                                IconButton(
+                                    onClick = {
+                                        setResult(RESULT_CANCELED)
+                                        finish()
+                                    }
+                                ) {
                                     Icon(
                                         Icons.AutoMirrored.Default.ArrowBack,
                                         modifier = Modifier
@@ -179,7 +179,7 @@ class PairingActivity : ComponentActivity() {
                                         if (mIsDiscovering) Icons.Default.Refresh else Icons.Default.Search,
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(6.dp),
+                                            .padding(4.dp),
                                         contentDescription = stringResource(if (mIsDiscovering) R.string.refresh else R.string.start_search)
                                     )
                                 }
@@ -240,15 +240,13 @@ private fun Contents(
         modifier = Modifier
             .padding(
                 start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                top = 0.dp,
-                end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                bottom = 0.dp
+                end = padding.calculateEndPadding(LocalLayoutDirection.current)
             )
             .then(modifier)
     ) {
-        item {
-            Spacer(Modifier.requiredHeight(padding.calculateTopPadding()))
+        item { Spacer(Modifier.requiredHeight(padding.calculateTopPadding())) }
 
+        item {
             Text(
                 stringResource(R.string.found_devices),
                 style = MaterialTheme.typography.labelLarge,
@@ -288,7 +286,6 @@ private fun Contents(
     }
 }
 
-@OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class, ExperimentalAnimationGraphicsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 private fun ConnectableDeviceItem(
@@ -318,7 +315,7 @@ private fun ConnectableDeviceItem(
             .background(if (isConnecting) blue_mirage else Color.Transparent)
             .wrapContentSize()
             .fillMaxWidth()
-            .padding(vertical = 24.dp, horizontal = 24.dp)
+            .padding(16.dp)
             .then(modifier)
     ) {
         Column {

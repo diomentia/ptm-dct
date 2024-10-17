@@ -3,9 +3,6 @@ package space.diomentia.ptm_dct.data.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.beepiz.bluetooth.gattcoroutines.ExperimentalBleGattCoroutinesCoroutinesApi
 import com.beepiz.bluetooth.gattcoroutines.GattConnection
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +22,8 @@ import java.util.UUID
 @OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class)
 abstract class PtmGattInterface(device: BluetoothDevice) {
     companion object {
+        const val MAX_PAIR_WAIT = 5000L
+
         suspend fun isAccessible(
             device: BluetoothDevice
         ): Boolean {
@@ -32,14 +31,18 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
                 device.type == BluetoothDevice.DEVICE_TYPE_LE
                 || device.type == BluetoothDevice.DEVICE_TYPE_DUAL
             ) {
-                val gatt = GattConnection(device)
-                withTimeoutOrNull(2000L) {
+                val gatt = GattConnection(
+                    device,
+                    GattConnection.ConnectionSettings(autoConnect = true)
+                )
+                withTimeoutOrNull(MAX_PAIR_WAIT) {
                     gatt.connect()
                 }
                 if (gatt.isConnected) {
                     gatt.close()
                     return true
                 }
+                gatt.close()
             }
             return false
         }
@@ -51,12 +54,9 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
     )
     protected val mCoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    protected var mGatt: GattConnection = GattConnection(
-        device,
-        connectionSettings = GattConnection.ConnectionSettings(autoConnect = true)
-    )
+    protected var mGatt: GattConnection = GattConnection(device)
 
-    var isConnected by mutableStateOf(mGatt.isConnected)
+    open var isConnected = mGatt.isConnected
         protected set
 
     init {
@@ -80,14 +80,7 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
             }
         }
     }
-    fun disconnect() {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (mGatt.isConnected) {
-                mGatt.disconnect()
-                isConnected = false
-            }
-        }
-    }
+
     fun cancel() {
         isConnected = false
         mGatt.close()
@@ -99,35 +92,34 @@ abstract class PtmGattInterface(device: BluetoothDevice) {
         value: ByteArray
     )
 
-    protected fun readCharacteristic(service: UUID, characteristic: UUID) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            mGatt.readCharacteristic(char)
-            characteristicCallback(char, char.value)
-        }
+    protected suspend fun readCharacteristic(service: UUID, characteristic: UUID) {
+        if (!mGatt.isConnected)
+            return
+        val char =
+            mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mGatt.readCharacteristic(char)
+        characteristicCallback(char, char.value)
     }
 
-    protected fun writeCharacteristic(service: UUID, characteristic: UUID, value: ByteArray) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            char.value = value
-            mGatt.writeCharacteristic(char)
-        }
+    protected suspend fun writeCharacteristic(
+        service: UUID,
+        characteristic: UUID,
+        value: ByteArray
+    ) {
+        if (!mGatt.isConnected)
+            return
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        char.value = value
+        mGatt.writeCharacteristic(char)
     }
 
-    protected fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
-        mCoroutineScope.queueJob(mJobQueue) {
-            if (!isConnected)
-                return@queueJob
-            val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return@queueJob
-            mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)
-            mCoroutineScope.launch {
-                mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
-            }
+    protected suspend fun toggleNotifications(service: UUID, characteristic: UUID, enabled: Boolean) {
+        if (!mGatt.isConnected)
+            return
+        val char = mGatt.getService(service)?.getCharacteristic(characteristic) ?: return
+        mGatt.setCharacteristicNotificationsEnabledOnRemoteDevice(char, enabled)
+        mCoroutineScope.launch {
+            mGatt.notifications(char).collect { characteristicCallback(char, char.value) }
         }
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import space.diomentia.ptm_dct.queueJob
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
@@ -47,15 +48,23 @@ class PtmMikGatt(private val device: BluetoothDevice) : PtmGattInterface(device)
         }
     }
 
-    fun fetchBatteryLevel() = readCharacteristic(SERVICE_BATTERY, CHAR_BATTERY_LEVEL)
+    fun fetchBatteryLevel() = mCoroutineScope.queueJob(mJobQueue) {
+        readCharacteristic(SERVICE_BATTERY, CHAR_BATTERY_LEVEL)
+    }
     fun listenBatteryLevel(enable: Boolean = true) {
         fetchBatteryLevel()
-        toggleNotifications(SERVICE_BATTERY, CHAR_BATTERY_LEVEL, enable)
+        mCoroutineScope.queueJob(mJobQueue) {
+            toggleNotifications(SERVICE_BATTERY, CHAR_BATTERY_LEVEL, enable)
+        }
     }
 
-    fun fetchVoltage() = readCharacteristic(SERVICE_MEASUREMENT, CHAR_VOLTAGE)
+    fun fetchVoltage() = mCoroutineScope.queueJob(mJobQueue) {
+        readCharacteristic(SERVICE_MEASUREMENT, CHAR_VOLTAGE)
+    }
     fun listenVoltage(enable: Boolean = true) {
         fetchVoltage()
-        toggleNotifications(SERVICE_MEASUREMENT, CHAR_VOLTAGE, enable)
+        mCoroutineScope.queueJob(mJobQueue) {
+            toggleNotifications(SERVICE_MEASUREMENT, CHAR_VOLTAGE, enable)
+        }
     }
 }
