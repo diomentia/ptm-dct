@@ -179,11 +179,6 @@ private fun Contents(
         )
         Spacer(Modifier.height(8.dp))
         // TODO: segmented button USB/Bluetooth
-        val passwordFieldAlpha by animateFloatAsState(
-            if (LocalStep.current.value <= Step.UserLevel) 1f else 0f,
-            animationSpec = tween(durationMillis = 400, delayMillis = 100),
-            label = "password_field_alpha"
-        )
         PasswordField()
         Spacer(Modifier.height(16.dp))
         Row(
@@ -386,15 +381,20 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    var enableRfid by ApplicationPreferences.rememberEnableRfid()
-    if (currentStep == Step.RfidManager && RfidController.isAvailable ||
+    val enableRfid by ApplicationPreferences.rememberEnableRfid()
+    if (
+        currentStep == Step.RfidManager && RfidController.isAvailable ||
         currentStep == Step.RfidTag && Session.rfidTag != null ||
         !enableRfid && (currentStep == Step.RfidManager || currentStep == Step.RfidTag)
     ) {
         currentStep = currentStep.next()
+    } else if (
+        enableRfid && currentStep > Step.RfidTag && Session.rfidTag == null
+    ) {
+        currentStep = Step.RfidManager
     }
     var enabled by remember { mutableStateOf(false) }
-    enabled = enableRfid && currentStep >= Step.RfidTag
+    enabled = currentStep >= Step.RfidTag && RfidController.isAvailable
 
     var showDialog by remember { mutableStateOf(false) }
     if (enabled && showDialog) {

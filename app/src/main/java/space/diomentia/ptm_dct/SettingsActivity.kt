@@ -129,7 +129,7 @@ class SettingsActivity : ComponentActivity() {
                             var enableRfid by ApplicationPreferences.rememberEnableRfid()
                             SettingsSwitch(
                                 state = enableRfid,
-                                title = { Text(stringResource(R.string.enable_rfid_reader)) },
+                                title = { Text(stringResource(R.string.require_rfid)) },
                                 colors = colors
                             ) { enableRfid = it }
 

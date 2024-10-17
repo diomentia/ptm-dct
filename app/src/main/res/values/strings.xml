@@ -43,5 +43,5 @@
     <string name="controller_temperature">Температура контроллера</string>
     <string name="channel">Канал</string>
     <string name="date">Дата</string>
-    <string name="enable_rfid_reader">Включить считыватель RFID</string>
+    <string name="require_rfid">Требовать считывание RFID метки</string>
 </resources>
