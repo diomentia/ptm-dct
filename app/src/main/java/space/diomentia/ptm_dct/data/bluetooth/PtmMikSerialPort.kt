@@ -171,24 +171,47 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                 }
             when (command) {
                 Command.GetJournal -> {
+                    var successful = true
                     var entryNumber = 0
-                    if (reader { value ->
+                    when (
+                        reader { value ->
                             Regex("""journal entries=(\d+)""").find(value).let {
                                 entryNumber = it?.groupValues?.get(1)?.toInt() ?: 0
                                 return@reader it == null
                             }
-                        } == false) {
-                        Log.i(
-                            "MikCommand",
-                            "${Command.GetJournal}: number of entries = $entryNumber"
-                        )
-                        repeat(entryNumber) { reader() }
-                        reader { false }
-                    } else {
-                        while (reader { !it.contains("EndJournal") } == true) {
                         }
+                    ) {
+                        true -> {
+                            var readResult: Boolean?
+                            do {
+                                readResult = reader { !it.contains("EndJournal") }
+                                if (readResult == null) {
+                                    successful = false
+                                }
+                            } while (readResult != false)
+                        }
+
+                        false -> {
+                            Log.i(
+                                "MikCommand",
+                                "${Command.GetJournal}: number of entries = $entryNumber"
+                            )
+                            repeat(entryNumber) {
+                                if (reader() == null) {
+                                    successful = false
+                                }
+                            }
+                            reader { false }
+                        }
+
+                        null -> successful = false
                     }
                     mikState.endJournalReading = true
+                    if (successful) {
+                        sendCommand(Command.ClearJournal)
+                    } else {
+                        hasLastCommandSucceeded = Command.ClearJournal to false
+                    }
                 }
 
                 else -> reader()
