@@ -17,6 +17,8 @@ accompanistPermissions = "0.35.1-alpha"
 blegattcoroutinesCore = "0.5.0"
 blegattcoroutinesGenericaccess = "0.5.0"
 animationGraphics = "1.7.3"
+uiTestAndroid = "1.7.3"
+datastorePreferences = "1.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +44,8 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 blegattcoroutines-core = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-core", version.ref = "blegattcoroutinesCore" }
 blegattcoroutines-genericaccess = { group = "com.beepiz.blegattcoroutines", name = "blegattcoroutines-genericaccess", version.ref = "blegattcoroutinesGenericaccess" }
 androidx-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics", version.ref = "animationGraphics" }
+androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

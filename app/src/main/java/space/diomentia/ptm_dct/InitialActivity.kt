@@ -76,8 +76,10 @@ import androidx.core.content.IntentCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import space.diomentia.ptm_dct.data.ApplicationPreferences
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.LocalStep
+import space.diomentia.ptm_dct.data.RfidController
 import space.diomentia.ptm_dct.data.Session
 import space.diomentia.ptm_dct.data.Session.Step
 import space.diomentia.ptm_dct.data.bluetooth.ListenBtState
@@ -301,7 +303,7 @@ private fun PasswordField(
         ) {
             var passwordInput by remember { mutableStateOf("") }
             fun applyPassword() {
-                Session.updateUserLevel(passwordInput)
+                Session.updateUserLevel(context, passwordInput)
                 if (currentStep >= Step.Password) {
                     if (passwordInput.isBlank()) {
                         currentStep = Step.Password
@@ -384,14 +386,15 @@ private fun ScanRfidButton(
     modifier: Modifier = Modifier
 ) {
     var currentStep by LocalStep.current
-    // if (currentStep == Step.RfidManager && RfidController.isAvailable ||
-    //     currentStep == Step.RfidTag && Session.rfidTag != null) {
-    // to test app without a device with RFID
-    if (currentStep == Step.RfidManager || currentStep == Step.RfidTag) {
+    var enableRfid by ApplicationPreferences.rememberEnableRfid()
+    if (currentStep == Step.RfidManager && RfidController.isAvailable ||
+        currentStep == Step.RfidTag && Session.rfidTag != null ||
+        !enableRfid && (currentStep == Step.RfidManager || currentStep == Step.RfidTag)
+    ) {
         currentStep = currentStep.next()
     }
     var enabled by remember { mutableStateOf(false) }
-    enabled = currentStep >= Step.RfidTag
+    enabled = enableRfid && currentStep >= Step.RfidTag
 
     var showDialog by remember { mutableStateOf(false) }
     if (enabled && showDialog) {

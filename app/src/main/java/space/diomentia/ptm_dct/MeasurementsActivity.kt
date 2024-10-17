@@ -58,7 +58,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import space.diomentia.ptm_dct.data.ApplicationSettings
+import space.diomentia.ptm_dct.data.ApplicationPreferences
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.Session
@@ -187,7 +187,9 @@ private fun Contents(
                 VoltageGrid(Modifier.fillMaxWidth())
             }
         }
+
         Spacer(Modifier.weight(1f))
+
         PtmFilledButton(
             {
                 context.startActivity(
@@ -203,9 +205,11 @@ private fun Contents(
                 style = MaterialTheme.typography.titleMedium
             )
         }
+
+        val demoPassport by ApplicationPreferences.rememberDemoPassport()
         PtmFilledButton(
             {
-                ApplicationSettings.demoPassport?.let { pdf ->
+                demoPassport?.let { pdf ->
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW).apply {
                             setData(pdf)
@@ -215,7 +219,7 @@ private fun Contents(
                     )
                 }
             },
-            enabled = ApplicationSettings.demoPassport != null,
+            enabled = demoPassport != null,
             modifier = Modifier
                 .padding(4.dp)
                 .fillMaxWidth()
@@ -225,6 +229,7 @@ private fun Contents(
                 style = MaterialTheme.typography.titleMedium
             )
         }
+
         val reportLauncher = rememberLauncherForActivityResult(
             ActivityResultContracts.CreateDocument("application/vnd")
         ) { uri ->

@@ -37,10 +37,11 @@
     <string name="open_kip_passport">Открыть паспорт КИПа</string>
     <string name="generate_report">Сгенерировать отчёт</string>
     <string name="journal">Журнал</string>
-    <string name="choose_demo_passport">Выбрать файл демо паспорта МИКа</string>
+    <string name="choose_demo_passport">Выбрать файл демонстрационного паспорта КИП</string>
     <string name="time">Время</string>
     <string name="battery">Батарея</string>
     <string name="controller_temperature">Температура контроллера</string>
     <string name="channel">Канал</string>
     <string name="date">Дата</string>
+    <string name="enable_rfid_reader">Включить считыватель RFID</string>
 </resources>

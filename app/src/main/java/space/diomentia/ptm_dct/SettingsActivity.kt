@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -41,8 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlinx.coroutines.launch
-import space.diomentia.ptm_dct.data.ApplicationSettings
+import space.diomentia.ptm_dct.data.ApplicationPreferences
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
 import space.diomentia.ptm_dct.data.PasswordHash
 import space.diomentia.ptm_dct.data.Session
@@ -102,7 +105,8 @@ class SettingsActivity : ComponentActivity() {
                             })
                         }
                         Column(
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             SettingsMenuLink(
                                 title = { Text(stringResource(R.string.change_password)) },
@@ -120,13 +124,28 @@ class SettingsActivity : ComponentActivity() {
                                 }
                             }
 
+                            HorizontalDivider(Modifier.fillMaxWidth(.9f))
+
+                            var enableRfid by ApplicationPreferences.rememberEnableRfid()
+                            SettingsSwitch(
+                                state = enableRfid,
+                                title = { Text(stringResource(R.string.enable_rfid_reader)) },
+                                colors = colors
+                            ) { enableRfid = it }
+
+                            HorizontalDivider(Modifier.fillMaxWidth(.9f))
+
+                            var demoPassport by ApplicationPreferences.rememberDemoPassport()
                             val demoPassportLauncher = rememberLauncherForActivityResult(
                                 ActivityResultContracts.OpenDocument()
                             ) { uri ->
                                 if (uri == null)
                                     return@rememberLauncherForActivityResult
-                                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                ApplicationSettings.demoPassport = uri
+                                contentResolver.takePersistableUriPermission(
+                                    uri,
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+                                demoPassport = uri
                             }
                             SettingsMenuLink(
                                 title = { Text(stringResource(R.string.choose_demo_passport)) },
@@ -146,10 +165,11 @@ class SettingsActivity : ComponentActivity() {
 fun ChangePasswordDialog(
     onDismissRequest: () -> Unit = {}
 ) {
+    var passwordAdmin by ApplicationPreferences.rememberPasswordAdmin()
     var adminPassword by remember { mutableStateOf("") }
     val onConfirmation = {
         PasswordHash.encrypt(adminPassword)?.let {
-            ApplicationSettings.passwordAdmin = it
+            passwordAdmin = it
             onDismissRequest()
         } ?: Unit
     }

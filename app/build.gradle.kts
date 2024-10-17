@@ -70,6 +70,8 @@ dependencies {
     implementation(libs.blegattcoroutines.genericaccess)
     implementation(libs.androidx.animation.graphics)
     implementation(files("libs/poishadow-all.jar"))
+    implementation(libs.androidx.ui.test.android)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
