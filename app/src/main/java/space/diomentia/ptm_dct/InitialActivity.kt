@@ -105,6 +105,9 @@ class InitialActivity : ComponentActivity() {
                 LocalSnackbarHostState provides snackbarHostState,
                 LocalStep provides remember { mutableStateOf(Step.Password) }
             ) {
+                val context = LocalContext.current
+                val coroutineScope = rememberCoroutineScope()
+                val currentStep by LocalStep.current
                 PtmTheme {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -113,6 +116,10 @@ class InitialActivity : ComponentActivity() {
                             actions = {
                                 IconButton(
                                     onClick = {
+                                        if (currentStep <= Step.UserLevel) {
+                                            stepHint(context, currentStep, snackbarHostState, coroutineScope)
+                                            return@IconButton
+                                        }
                                         val intent = Intent(
                                             this@InitialActivity,
                                             SettingsActivity::class.java
@@ -155,7 +162,7 @@ private fun Contents(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
         SideArrowContainer(
             toRight = false,
             slantFactor = 4,
@@ -167,8 +174,9 @@ private fun Contents(
                 painter = painterResource(R.drawable.logo_ptm),
                 contentDescription = stringResource(R.string.logo_ptm_description),
                 modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize()
+                    .padding(24.dp)
+                    .fillMaxWidth(.6f)
+                    .fillMaxHeight()
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -196,8 +204,8 @@ private fun Contents(
 }
 
 private fun stepHint(
-    currentStep: Step,
     context: Context,
+    currentStep: Step,
     snackbarHostState: SnackbarHostState,
     coroutineScope: CoroutineScope
 ) {
@@ -427,7 +435,7 @@ private fun ScanRfidButton(
                 }
             ) {
                 if (!enabled) {
-                    stepHint(currentStep, context, snackbarHostState, coroutineScope)
+                    stepHint(context, currentStep, snackbarHostState, coroutineScope)
                     return@combinedClickable
                 }
                 showDialog = true
