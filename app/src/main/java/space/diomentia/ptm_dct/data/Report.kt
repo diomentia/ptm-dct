@@ -44,8 +44,9 @@ fun MikState.exportJournalToExcel(
         setFillForegroundColor(toXssfColor(white))
     }
 
-    workbook.createSheet("MIK ${authInfo?.serialNumber ?: "??"} journal").run {
+    workbook.createSheet("MIK-${authInfo?.serialNumber ?: "??"}").run {
         val headers = arrayOf(
+            context.getString(R.string.date),
             context.getString(R.string.time),
             context.getString(R.string.battery),
             context.getString(R.string.controller_temperature),
@@ -63,20 +64,26 @@ fun MikState.exportJournalToExcel(
             createRow(i + 1).run {
                 createCell(0).run {
                     setCellValue(entry.timestamp.format(DateTimeFormatter.ofPattern(
-                        "hh:mm:ss dd-MM-yyyy"
+                        "dd-MM-yyyy"
                     )))
                     cellStyle = bodyStyle
                 }
                 createCell(1).run {
-                    setCellValue(entry.battery.toDouble())
+                    setCellValue(entry.timestamp.format(DateTimeFormatter.ofPattern(
+                        "hh:mm:ss"
+                    )))
                     cellStyle = bodyStyle
                 }
                 createCell(2).run {
+                    setCellValue(entry.battery.toDouble())
+                    cellStyle = bodyStyle
+                }
+                createCell(3).run {
                     setCellValue(entry.controllerTemperature.toDouble())
                     cellStyle = bodyStyle
                 }
                 entry.voltage.forEachIndexed { i, v ->
-                    createCell(3 + i).run {
+                    createCell(4 + i).run {
                         setCellValue(v.toDouble())
                         cellStyle = bodyStyle
                     }

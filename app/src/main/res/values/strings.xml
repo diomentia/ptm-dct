@@ -42,4 +42,5 @@
     <string name="battery">Батарея</string>
     <string name="controller_temperature">Температура контроллера</string>
     <string name="channel">Канал</string>
+    <string name="date">Дата</string>
 </resources>

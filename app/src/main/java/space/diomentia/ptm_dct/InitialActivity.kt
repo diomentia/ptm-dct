@@ -283,7 +283,7 @@ private fun PasswordField(
     var currentStep by LocalStep.current
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    if (Session.userLevel <= Session.AccessLevel.Guest) {
+    if (Session.userLevel <= Session.AccessLevel.Guest && currentStep > Step.UserLevel) {
         currentStep = Step.Password
     }
     LaunchedEffect(passwordVisible) {

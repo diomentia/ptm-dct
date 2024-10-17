@@ -59,7 +59,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     companion object {
         const val MTU = 512
-        const val MAX_READ_WAIT = 5000L
+        const val MAX_READ_WAIT = 3000L
         const val UPDATE_PERIOD = 500L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
@@ -166,12 +166,13 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                     return@withTimeoutOrNull true
                 }.also {
                     if (it == null) {
+                        Log.w("MikCommand", "Timeout")
                         hasLastCommandSucceeded = command to false
                     }
                 }
             when (command) {
                 Command.GetJournal -> {
-                    var successful = true
+                    var fails = 0
                     var entryNumber = 0
                     when (
                         reader { value ->
@@ -182,13 +183,13 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                         }
                     ) {
                         true -> {
-                            var readResult: Boolean?
                             do {
-                                readResult = reader { !it.contains("EndJournal") }
-                                if (readResult == null) {
-                                    successful = false
+                                when (reader { !it.contains("EndJournal") }) {
+                                    false -> break
+                                    null -> ++fails
+                                    else -> Unit
                                 }
-                            } while (readResult != false)
+                            } while (fails <= 3)
                         }
 
                         false -> {
@@ -198,16 +199,16 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                             )
                             repeat(entryNumber) {
                                 if (reader() == null) {
-                                    successful = false
+                                    ++fails
                                 }
                             }
                             reader { false }
                         }
 
-                        null -> successful = false
+                        null -> ++fails
                     }
                     mikState.endJournalReading = true
-                    if (successful) {
+                    if (fails > 0) {
                         sendCommand(Command.ClearJournal)
                     } else {
                         hasLastCommandSucceeded = Command.ClearJournal to false

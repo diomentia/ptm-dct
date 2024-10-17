@@ -54,6 +54,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.core.content.IntentCompat
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import space.diomentia.ptm_dct.data.ApplicationSettings
 import space.diomentia.ptm_dct.data.LocalGattConnection
@@ -140,6 +143,7 @@ class MeasurementsActivity : ComponentActivity() {
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
 private fun Contents(
     modifier: Modifier = Modifier
@@ -228,8 +232,10 @@ private fun Contents(
                 return@rememberLauncherForActivityResult
             val workbook = gatt.mikState.exportJournalToExcel(context)
                 ?: return@rememberLauncherForActivityResult
-            context.contentResolver.openOutputStream(uri).let {
-                workbook.write(it)
+            GlobalScope.launch {
+                context.contentResolver.openOutputStream(uri).let {
+                    workbook.write(it)
+                }
             }
             context as Activity
             context.setResult(Activity.RESULT_OK)
@@ -238,11 +244,13 @@ private fun Contents(
         PtmFilledButton(
             {
                 reportLauncher.launch(
-                    "journal_${LocalDateTime.now().format(
-                        DateTimeFormatter.ofPattern(
-                            "yyyy-MM-dd_hhmmss"
+                    "journal_%s.xlsx".format(
+                        LocalDateTime.now().format(
+                            DateTimeFormatter.ofPattern(
+                                "yyyy-MM-dd_hhmmss"
+                            )
                         )
-                    )}.xlsx"
+                    )
                 )
             },
             enabled = gatt.mikState.endJournalReading,
