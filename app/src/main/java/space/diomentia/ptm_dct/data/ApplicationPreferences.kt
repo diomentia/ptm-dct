@@ -13,8 +13,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -64,9 +68,11 @@ object ApplicationPreferences {
     val keyPasswordAdmin = stringPreferencesKey("password_admin")
     val keyEnableRfid = booleanPreferencesKey("enable_rfid")
     val keyDemoPassport = stringPreferencesKey("demo_passport")
+    val keyCommandTimeout = longPreferencesKey("command_timeout")
 
     private val Context.preferences: DataStore<Preferences> by preferencesDataStore(name = "preferences")
 
+    @OptIn(DelicateCoroutinesApi::class)
     @Composable
     private fun <P, T> rememberPreference(
         key: Preferences.Key<P>,
@@ -75,7 +81,6 @@ object ApplicationPreferences {
         defaultValue: P
     ): MutableState<T> {
         val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
         val state by remember {
             context.preferences.data
                 .map {
@@ -87,7 +92,7 @@ object ApplicationPreferences {
                 override var value: T
                     get() = decoder(state)
                     set(value) {
-                        coroutineScope.launch {
+                        GlobalScope.launch {
                             context.preferences.edit {
                                 try {
                                     it[key] = encoder(value)
@@ -133,4 +138,12 @@ object ApplicationPreferences {
         decoder = { if (it != "null") Uri.parse(it) else null },
         encoder = { it.toString() }
     )
+
+    @Composable
+    fun rememberCommandTimeout() = rememberPreference(
+        key = keyCommandTimeout,
+        defaultValue = 1000L
+    )
+    suspend fun getCommandTimeout(context: Context) =
+        context.preferences.data.first()[keyCommandTimeout] ?: 1000L
 }

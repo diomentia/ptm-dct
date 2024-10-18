@@ -29,7 +29,7 @@ import java.util.UUID
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalBleGattCoroutinesCoroutinesApi::class)
-class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
+class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L) : PtmGattInterface(device) {
     enum class Command(private val command: String, private val hasArgs: Boolean = false) {
         Authentication("Authentication."),
         GetStatus("GetStatus."),
@@ -59,7 +59,6 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
 
     companion object {
         const val MTU = 512
-        const val MAX_READ_WAIT = 1000L
         const val UPDATE_PERIOD = 500L
 
         val SERVICE_BATTERY: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
@@ -158,7 +157,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                 command.withArgs(*args).toByteArray()
             )
             suspend fun reader(dataValidation: (String) -> Boolean = { true }): Boolean? =
-                withTimeoutOrNull(MAX_READ_WAIT) {
+                withTimeoutOrNull(commandTimeout) {
                     val data = readData.receive()
                     if (!dataValidation(data))
                         return@withTimeoutOrNull false
