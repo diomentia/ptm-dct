@@ -58,10 +58,10 @@ data class MikStatus(
                 | door ([01]),
                 | Bat=(\d+\.\d+)V,
                 | Temp=(\d+),
-                | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
+                | ((?:-?\d+(?:\.\d+)? ?mV,? ?)+)
                 """.trimMargin().replace("\n", "")
             )
-            val voltageRegex = Regex("""(\d+(?:\.\d+)?) mV""")
+            val voltageRegex = Regex("""(-?\d+(?:\.\d+)?) mV""")
             return try {
                 val matches = regex
                     .find(raw)
@@ -129,7 +129,7 @@ data class MikJournalEntry(
                     | Time (\d+:\d+:\d+),
                     | Bat (\d+\.\d+)V,
                     | Temp (\d+),
-                    | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
+                    | ((?:-?\d+(?:\.\d+)? ?mV,? ?)+)
                     """
                 else
                     """
@@ -137,11 +137,11 @@ data class MikJournalEntry(
                     | Time (\d+:\d+:\d+),
                     | Bat=(\d+\.\d+)V,
                     | Temp=(\d+),
-                    | ((?:\d+(?:\.\d+)? ?mV,? ?)+)
+                    | ((?:-?\d+(?:\.\d+)? ?mV,? ?)+)
                     """
                         ).trimMargin().replace("\n", "")
             )
-            val voltageRegex = Regex("""(\d+(?:\.\d+)?) ?mV""")
+            val voltageRegex = Regex("""(-?\d+(?:\.\d+)?) ?mV""")
             return try {
                 val matches = regex
                     .find(raw)
