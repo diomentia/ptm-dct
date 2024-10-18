@@ -140,7 +140,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         }
     }
 
-    fun sendCommand(command: Command, vararg args: String): Job {
+    fun sendCommand(command: Command, vararg args: String, retries: Int = 16): Job {
         when (command) {
             Command.GetJournal -> {
                 mikState.endJournalReading = false
@@ -208,14 +208,23 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
                         null -> ++fails
                     }
                     mikState.endJournalReading = true
-                    if (fails > 0) {
+                    if (fails == 0) {
                         sendCommand(Command.ClearJournal)
                     } else {
+                        if (retries > 0) {
+                            sendCommand(command, *args, retries = retries - 1)
+                            return@queueJob
+                        }
                         hasLastCommandSucceeded = Command.ClearJournal to false
                     }
                 }
 
-                else -> reader()
+                else -> {
+                    if (reader() == null && retries > 0) {
+                        sendCommand(command, *args, retries = retries - 1)
+                        return@queueJob
+                    }
+                }
             }
         }
     }
@@ -242,7 +251,7 @@ class PtmMikSerialPort(device: BluetoothDevice) : PtmGattInterface(device) {
         }
         updater = mCoroutineScope.launch {
             while (true) {
-                sendCommand(Command.GetStatus).await()
+                sendCommand(Command.GetStatus, retries = 0).await()
                 delay(UPDATE_PERIOD)
             }
         }
