@@ -44,4 +44,6 @@
     <string name="channel">Канал</string>
     <string name="date">Дата</string>
     <string name="require_rfid">Требовать считывание RFID метки</string>
+    <string name="command_timeout">Время ожидания ответа на команду</string>
+    <string name="milliseconds_abbr">мс</string>
 </resources>

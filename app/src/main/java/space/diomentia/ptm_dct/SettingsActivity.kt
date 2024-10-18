@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.alorma.compose.settings.ui.SettingsMenuLink
@@ -153,6 +155,29 @@ class SettingsActivity : ComponentActivity() {
                             ) {
                                 demoPassportLauncher.launch(arrayOf("application/pdf"))
                             }
+
+                            Text(
+                                stringResource(R.string.connection),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                            )
+
+                            val commandTimeout by ApplicationPreferences.rememberCommandTimeout()
+                            var showCommandTimeoutDialog by remember { mutableStateOf(false) }
+                            SettingsMenuLink(
+                                title = { Text(stringResource(R.string.command_timeout)) },
+                                subtitle = {
+                                    Text("$commandTimeout ${stringResource(R.string.milliseconds_abbr)}")
+                                },
+                                colors = colors
+                            ) { showCommandTimeoutDialog = true }
+                            if (showCommandTimeoutDialog) {
+                                CommandTimeoutDialog(onDismissRequest = {
+                                    showCommandTimeoutDialog = false
+                                })
+                            }
                         }
                     }
                 }
@@ -162,7 +187,7 @@ class SettingsActivity : ComponentActivity() {
 }
 
 @Composable
-fun ChangePasswordDialog(
+private fun ChangePasswordDialog(
     onDismissRequest: () -> Unit = {}
 ) {
     var passwordAdmin by ApplicationPreferences.rememberPasswordAdmin()
@@ -218,6 +243,72 @@ fun ChangePasswordDialog(
                     }
                     TextButton(
                         enabled = PasswordHash.checkPassword(adminPassword),
+                        onClick = onConfirmation
+                    ) {
+                        Text(
+                            stringResource(R.string.confirm),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommandTimeoutDialog(
+    onDismissRequest: () -> Unit = {}
+) {
+    var commandTimeout by ApplicationPreferences.rememberCommandTimeout()
+    var newValue by remember { mutableStateOf("") }
+    newValue = commandTimeout.toString()
+    val onConfirmation = {
+        commandTimeout = newValue.toLong()
+        onDismissRequest()
+    }
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Column(
+                    Modifier
+                        .height(IntrinsicSize.Min)
+                        .padding(8.dp)
+                ) {
+                    val textPadding = Modifier.padding(8.dp)
+                    val textStyle = MaterialTheme.typography.bodyMedium
+                    val accepted = remember { Regex("""^\d+$""") }
+                    Text(
+                        "${stringResource(R.string.command_timeout)} (${stringResource(R.string.milliseconds_abbr)}):",
+                        textPadding,
+                        style = textStyle
+                    )
+                    TextField(
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        value = newValue,
+                        onValueChange = {
+                            if (it.isEmpty() || it.matches(accepted)) {
+                                newValue = it
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismissRequest) {
+                        Text(
+                            stringResource(R.string.cancel),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    TextButton(
                         onClick = onConfirmation
                     ) {
                         Text(

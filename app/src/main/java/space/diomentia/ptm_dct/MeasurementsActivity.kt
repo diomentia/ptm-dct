@@ -54,10 +54,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.core.content.IntentCompat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import space.diomentia.ptm_dct.data.ApplicationPreferences
 import space.diomentia.ptm_dct.data.LocalGattConnection
 import space.diomentia.ptm_dct.data.LocalSnackbarHostState
@@ -78,6 +81,7 @@ import java.time.format.DateTimeFormatter
 class MeasurementsActivity : ComponentActivity() {
     private lateinit var mDevice: BluetoothDevice
     private var mSerialPort by mutableStateOf<PtmMikSerialPort?>(null)
+    private val mCoroutineScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,8 +134,13 @@ class MeasurementsActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (mSerialPort == null) {
-            mSerialPort = PtmMikSerialPort(mDevice)
-            Session.mikState = mSerialPort?.mikState
+            mCoroutineScope.launch {
+                mSerialPort = PtmMikSerialPort(
+                    mDevice,
+                    commandTimeout = ApplicationPreferences.getCommandTimeout(applicationContext)
+                )
+                Session.mikState = mSerialPort?.mikState
+            }
         }
         mSerialPort!!.connect()
     }
