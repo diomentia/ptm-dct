@@ -81,7 +81,6 @@ import java.time.format.DateTimeFormatter
 class MeasurementsActivity : ComponentActivity() {
     private lateinit var mDevice: BluetoothDevice
     private var mSerialPort by mutableStateOf<PtmMikSerialPort?>(null)
-    private val mCoroutineScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,7 +133,7 @@ class MeasurementsActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (mSerialPort == null) {
-            mCoroutineScope.launch {
+            runBlocking {
                 mSerialPort = PtmMikSerialPort(
                     mDevice,
                     commandTimeout = ApplicationPreferences.getCommandTimeout(applicationContext)
@@ -169,7 +168,6 @@ private fun Contents(
             sendCommand(PtmMikSerialPort.Command.Authentication)
             sendCommand(PtmMikSerialPort.Command.GetStatus)
             sendCommand(PtmMikSerialPort.Command.GetSetup)
-            setDateTime(LocalDateTime.now())
             sendCommand(PtmMikSerialPort.Command.GetJournal)
             updateStatus()
         }
