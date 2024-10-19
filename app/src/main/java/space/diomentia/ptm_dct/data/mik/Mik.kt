@@ -114,7 +114,7 @@ data class MikStatus(
 
 
 data class MikJournalEntry(
-    val timestamp: LocalDateTime,
+    var timestamp: LocalDateTime,
     val battery: Float,
     val controllerTemperature: Int,
     val voltage: Array<Float>

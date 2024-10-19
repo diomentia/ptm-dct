@@ -22,8 +22,11 @@ import space.diomentia.ptm_dct.data.mik.MikStatus
 import space.diomentia.ptm_dct.queueJob
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.TimeZone
 import java.util.UUID
 
 
@@ -72,8 +75,10 @@ class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L
 
     var hasLastCommandSucceeded by mutableStateOf<Pair<Command?, Boolean>>(null to true)
 
+    private var timeCorrection = Duration.ofMillis(0L)
     private val readData = Channel<String>(Channel.UNLIMITED)
     private var updater: Job? = null
+
     override var isConnected: Boolean
         get() = super.isConnected
         set(value) {
@@ -127,7 +132,10 @@ class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L
                 mikState.setupInfo = value; true
             }
 
-            Command.GetJournal -> MikJournalEntry.parse(value)?.also { mikState.journal.add(it) } != null
+            Command.GetJournal -> MikJournalEntry.parse(value)?.also {
+                it.timestamp = it.timestamp.plus(timeCorrection)
+                mikState.journal.add(it)
+            } != null
             Command.SetDateTime, Command.Setup, Command.ClearJournal -> value
                 .trim()
                 .lowercase() == "ok"
@@ -139,7 +147,7 @@ class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L
         }
     }
 
-    fun sendCommand(command: Command, vararg args: String, retries: Int = 16): Job {
+    fun sendCommand(command: Command, vararg args: String, retries: Int = 8): Job {
         when (command) {
             Command.GetJournal -> {
                 mikState.endJournalReading = false
@@ -150,6 +158,19 @@ class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L
         return mCoroutineScope.queueJob(mJobQueue) {
             if (!mGatt.isConnected) {
                 return@queueJob
+            }
+            when (command) {
+                Command.GetJournal -> {
+                    if (mikState.statusInfo == null) {
+                        sendCommand(Command.GetStatus)
+                        sendCommand(Command.GetJournal)
+                        return@queueJob
+                    } else {
+                        timeCorrection =
+                            Duration.between(mikState.statusInfo!!.timestamp, LocalDateTime.now())
+                    }
+                }
+                else -> Unit
             }
             writeCharacteristic(
                 SERVICE_DATA,
@@ -209,6 +230,7 @@ class PtmMikSerialPort(device: BluetoothDevice, val commandTimeout: Long = 1000L
                     mikState.endJournalReading = true
                     if (fails == 0) {
                         sendCommand(Command.ClearJournal)
+                        setDateTime(LocalDateTime.now())
                     } else {
                         if (retries > 0) {
                             sendCommand(command, *args, retries = retries - 1)
