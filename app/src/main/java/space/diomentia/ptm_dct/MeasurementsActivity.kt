@@ -138,11 +138,14 @@ class MeasurementsActivity : ComponentActivity() {
                 mSerialPort = PtmMikSerialPort(
                     mDevice,
                     commandTimeout = ApplicationPreferences.getCommandTimeout(applicationContext)
-                )
-                Session.mikState = mSerialPort?.mikState
+                ).also {
+                    Session.mikState = it.mikState
+                    it.connect()
+                }
             }
+        } else {
+            mSerialPort!!.connect()
         }
-        mSerialPort!!.connect()
     }
 
     override fun onDestroy() {

@@ -18,6 +18,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        versionNameSuffix = "-hotfix.1"
     }
 
     buildTypes {
