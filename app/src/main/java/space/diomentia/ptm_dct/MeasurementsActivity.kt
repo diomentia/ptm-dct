@@ -143,7 +143,9 @@ class MeasurementsActivity : ComponentActivity() {
                 }
             }
         } else {
-            mSerialPort!!.connect()
+            if (!mSerialPort!!.isConnected) {
+                mSerialPort!!.connect()
+            }
         }
     }
 
