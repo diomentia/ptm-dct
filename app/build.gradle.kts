@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -27,6 +29,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            applicationVariants.all {
+                outputs.all {
+                    this as BaseVariantOutputImpl
+                    outputFileName = "ptm-dct_${versionName}${versionNameSuffix ?: ""}.apk"
+                }
+            }
         }
     }
     compileOptions {
